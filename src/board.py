@@ -1,4 +1,4 @@
-from Cell import Coord, Cell
+from сell import Coord, Cell
 
 
 class Board:
