@@ -30,17 +30,17 @@ class Coord:
 
 
 class Cell:
-    def __init__(self, content: int = 0, weight: int = 0, coord: Coord = Coord()) -> None:
+    def __init__(self, position: Coord = Coord(), content: int = 0, weight: int = 0, ) -> None:
         """
 
         :param content Content in the cell:
         :param weight:
         :param coord Coordinates of the cell:
         """
-        self.position = coord.x, coord.y
+        self.position = position
         self.content = content
         self.weight = weight
-        self.index = coord.x + coord.y * 8
+        self.index = position.x + position.y * 8
         self.possible_moves = []
 
 
