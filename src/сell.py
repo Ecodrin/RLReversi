@@ -30,7 +30,7 @@ class Coord:
 
 
 class Cell:
-    def __init__(self, position: Coord = Coord(), content: int = 0, weight: int = 0, ) -> None:
+    def __init__(self, position: Coord, content: int = 0, weight: int = 0, ) -> None:
         """
 
         :param content Content in the cell:
