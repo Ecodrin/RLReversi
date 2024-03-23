@@ -1,7 +1,3 @@
-import pygame
-from pygame.locals import *
-
-
 def center_relative_to(element, relative_to, mode: str = 'both',
                        margins: tuple | list = (0, 0, 0, 0)) -> None:
     """
@@ -32,26 +28,3 @@ def center_relative_to(element, relative_to, mode: str = 'both',
             element[1] = coordinate_center_element[1] - element[3] // 2
         case _:
             raise ValueError('Invalid mode')
-
-
-def main():
-    a = Rect(10, 10, 400, 400)
-    b = Rect(100, 100, 240, 300)
-    running = True
-    screen = pygame.display.set_mode((600, 600))
-    screen.fill(Color('gray'))
-    pygame.draw.rect(screen, Color('black'), a, 7)
-    pygame.draw.rect(screen, Color('green'), b, 7)
-    pygame.display.update()
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                center_relative_to(b, a, margins=(0, 100, 0, 0))
-                pygame.draw.rect(screen, Color('red'), b, 7)
-            pygame.display.update()
-
-
-if __name__ == '__main__':
-    main()
