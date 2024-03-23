@@ -1,5 +1,9 @@
-def center_relative_to(object_for_center, relative_center, center_mode: str = 'both',
-                       murgins: tuple = (1000, 1000, 1000, 1000)) -> None:
+import pygame
+from pygame.locals import *
+
+
+def center_relative_to(element, relative_to, mode: str = 'both',
+                       margins: tuple | list = (0, 0, 0, 0)) -> None:
     """
     -----------
     |<x,y>    |
@@ -7,37 +11,47 @@ def center_relative_to(object_for_center, relative_center, center_mode: str = 'b
     |         |
     -----------
     Объект вида<x, y(относительно левого верхнего угла), длина, высота>
-    Отцентровывает объект относительно другого (посередине?).
+    Отцентровывает объект относительно другого.
     В объектах обязательно должны быть координаты
-    :param object_for_center: Объект для оцентровки
-    :param relative_center: Объект относительно которого происходит оцентровка
-    :param center_mode: Режим оцентровки (horizontally / vertically / both)
-    :param murgins: (отступы) расстояние в пикселях для отступа от центра,
+    :param element: Объект для оцентровки
+    :param relative_to: Объект относительно которого происходит оцентровка
+    :param mode: Режим оцентровки (horizontally / vertically / both)
+    :param margins: (отступы) расстояние в пикселях для отступа от центра,
     на вход принимается через массив (top, right, bottom, left).
     :return:
     """
-    coordinate_center_object = [relative_center[2] // 2 + relative_center[0], relative_center[3] // 2 + relative_center[1]]
-    object_top_right_bottom_left: list[int] = [object_for_center[3] // 2, object_for_center[2] // 2,
-                                               object_for_center[3] // 2, object_for_center[2] // 2]
-    # Сравниваем murgins и текущую длину объекта, чтобы взять наименьшую величину
-    if object_for_center[3] // 2 > murgins[0]:
-        object_top_right_bottom_left[0] = murgins[0]
-    if object_for_center[3] // 2 > murgins[2]:
-        object_top_right_bottom_left[2] = murgins[2]
-    if object_for_center[2] // 2 > murgins[1]:
-        object_top_right_bottom_left[1] = murgins[1]
-    if object_for_center[2] // 2 > murgins[3]:
-        object_top_right_bottom_left[3] = murgins[3]
+    coordinate_center_element = [relative_to[2] // 2 + relative_to[0] + margins[1] - margins[3],
+                                 relative_to[3] // 2 + relative_to[1] + margins[2] - margins[0]]
+    match mode:
+        case 'both':
+            element[0] = coordinate_center_element[0] - element[2] // 2
+            element[1] = coordinate_center_element[1] - element[3] // 2
+        case 'horizontally':
+            element[0] = coordinate_center_element[0] - element[2] // 2
+        case 'vertically':
+            element[1] = coordinate_center_element[1] - element[3] // 2
+        case _:
+            raise ValueError('Invalid mode')
 
-    # Работаем по режимам
-    if center_mode == 'both':
-        object_for_center[0] = coordinate_center_object[0] - object_top_right_bottom_left[1]
-        object_for_center[1] = coordinate_center_object[1] - object_top_right_bottom_left[0]
-    elif center_mode == 'horizontally':
-        object_for_center[0] = coordinate_center_object[0] - object_top_right_bottom_left[1]
-    elif center_mode == 'vertically':
-        object_for_center[1] = coordinate_center_object[1] - object_top_right_bottom_left[0]
-    else:
-        raise ValueError(f'Ошибка, передан неверный режим оцентровки')
-    object_for_center[2] = object_top_right_bottom_left[1] + object_top_right_bottom_left[3]
-    object_for_center[3] = object_top_right_bottom_left[0] + object_top_right_bottom_left[2]
+
+def main():
+    a = Rect(10, 10, 400, 400)
+    b = Rect(100, 100, 240, 300)
+    running = True
+    screen = pygame.display.set_mode((600, 600))
+    screen.fill(Color('gray'))
+    pygame.draw.rect(screen, Color('black'), a, 7)
+    pygame.draw.rect(screen, Color('green'), b, 7)
+    pygame.display.update()
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                center_relative_to(b, a, margins=(0, 100, 0, 0))
+                pygame.draw.rect(screen, Color('red'), b, 7)
+            pygame.display.update()
+
+
+if __name__ == '__main__':
+    main()
