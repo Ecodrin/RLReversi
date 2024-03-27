@@ -21,7 +21,7 @@ class StylizedText:
         self.font_size = font_size
         self.font_style = font_style
 
-    def __styles_determinate(self):
+    def __styles_determinate(self) -> None:
         mask = self.font_style & 0b11
         match mask:
             case 0:
