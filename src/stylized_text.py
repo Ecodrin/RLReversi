@@ -36,7 +36,7 @@ class StylizedText:
     def render(self, screen: pygame.display) -> None:
         """
         Отображает текст с заданным стилем и позицией
-        :param screen: разрешение экрана
+        :param screen: Разрешение выводимого окна.
         """
         bold, italic = self.__is_bold(), self.__is_cursive()
         font = pygame.font.SysFont(self.font_family, self.font_size, bold=bold, italic=italic)
