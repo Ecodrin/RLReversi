@@ -14,12 +14,12 @@ class StylizedText:
         :return:
         """
 
-        self.content = content
-        self.position = position
-        self.text_colour = text_colour
-        self.font_family = font_family
-        self.font_size = font_size
-        self.font_style = font_style
+        self.content: str = content
+        self.position: pygame.Rect = position
+        self.text_colour: pygame.color = text_colour
+        self.font_family: str = font_family
+        self.font_size: int = font_size
+        self.font_style: int = font_style
 
     def __is_italic(self) -> int:
         """
