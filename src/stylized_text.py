@@ -5,12 +5,12 @@ class StylizedText:
     def __init__(self, content: str = '', position: pygame.Rect = (), text_colour: pygame.color = (0, 0, 0),
                  font_family: str = 'Arial', font_size: int = 24, font_style: int = 0) -> None:
         """
-        :param content: Содержимое текста
-        :param position: Позиция текст
-        :param text_colour: Цвет текста
-        :param font_family: Шрифт текста
-        :param font_size: Размер текста
-        :param font_style: Стиль текста. Задаётся битовой маской: 1 - жирный 10 - курсив.
+        :param content: Содержимое текста.
+        :param position: Позиция текста.
+        :param text_colour: Цвет текста.
+        :param font_family: Шрифт текста.
+        :param font_size: Размер текста.
+        :param font_style: Стиль текста. Задаётся битовой маской: 0b01 - жирный, 0b10 - курсив.
         :return:
         """
 
@@ -21,7 +21,7 @@ class StylizedText:
         self.font_size = font_size
         self.font_style = font_style
 
-    def __is_cursive(self) -> int:
+    def __is_italic(self) -> int:
         """
         :return: Разряд отвечающий за курсив.
         """
@@ -38,7 +38,7 @@ class StylizedText:
         Отображает текст с заданным стилем и позицией
         :param screen: Разрешение выводимого окна.
         """
-        bold, italic = self.__is_bold(), self.__is_cursive()
+        bold, italic = self.__is_bold(), self.__is_italic()
         font = pygame.font.SysFont(self.font_family, self.font_size, bold=bold, italic=italic)
         text_surface = font.render(self.content, True, self.text_colour)
         screen.blit(text_surface, self.position)
