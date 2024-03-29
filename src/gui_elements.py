@@ -1,18 +1,17 @@
+from typing import Callable
 import pygame
 from pygame.locals import Rect
-from typing import Callable, Union
 from gui_utility import center_relative_to
 from сell import Clickable
-from typing import Union
 
 
 class StylizedText:
     def __init__(self, content: str = '', position: pygame.Rect = (), text_colour: tuple = (0, 0, 0),
                  font_family: str = 'Arial', font_size: int = 24, font_style: int = 0) -> None:
         """
-        :param content: Содержимое текста.
-        :param position: Позиция текста.
-        :param text_colour: Цвет текста.
+        :param content: Содержимое.
+        :param position: Позиция.
+        :param text_colour: Цвет.
         :param font_family: Шрифт текста.
         :param font_size: Размер текста.
         :param font_style: Стиль текста. Задаётся битовой маской: 0b01 - жирный, 0b10 - курсив.
@@ -39,6 +38,10 @@ class StylizedText:
         return self.font_style & 0b01
 
     def text_create(self) -> pygame.SurfaceType:
+        """
+        Заранее создаёт объект текста с нужными параметрами.
+        :return: Объект текста.
+        """
         bold, italic = self.__is_bold(), self.__is_italic()
         font = pygame.font.SysFont(self.font_family, self.font_size, bold=bold, italic=italic)
         text_surface = font.render(self.content, True, self.text_colour)
@@ -47,7 +50,7 @@ class StylizedText:
 
     def render(self, screen: pygame.display) -> None:
         """
-        Отображает текст с заданным стилем и позицией
+        Отображает текст с заданным стилем и позицией.
         :param screen: Разрешение выводимого окна.
         """
         screen.blit(self.text, self.position)
@@ -64,21 +67,33 @@ class Button(Clickable):
 
     def __init__(self, onClick: Callable, *args,
                  hitbox: Rect = pygame.Rect(0, 0, 0, 0),
-                 inner_text: StylizedText = '',
-                 default_texture: Union[tuple, str] = (0, 0, 255),
-                 hover_texture: Union[tuple, str] = (255, 0, 0),
-                 click_texture: Union[tuple, str] = (0, 255, 0)) -> None:
+                 inner_text: StylizedText,
+                 default_texture: tuple | str = (255, 255, 255),
+                 hover_texture: tuple | str = (160, 160, 160),
+                 click_texture: tuple | str = (64, 64, 64)) -> None:
 
+        """
+        :param onClick (callback function):
+        :param *args (arguments for callback function):
+        :param  hitbox (rectangular):
+        :param inner_text: Текст на кнопке.
+        :param default_texture: Стандартная текстура кнопки.
+        :param hover_texture: Текстура при наведении курсора.
+        :param click_texture: Текстура при клике.
+        """
         super().__init__(onClick, *args, hitbox=hitbox)
         self.inner_text: StylizedText = inner_text
-        self.default_texture: Union[tuple, str] = default_texture
-        self.hover_texture: Union[tuple, str] = hover_texture
-        self.click_texture: Union[tuple, str] = click_texture
-        self.button_texture: Union[tuple, str] = self.default_texture
+        self.default_texture: tuple | str = default_texture
+        self.hover_texture: tuple | str = hover_texture
+        self.click_texture: tuple | str = click_texture
+        self.button_texture: tuple | str = self.default_texture
 
     def hover_click(self, event: pygame.event) -> None:
-        point = pygame.mouse.get_pos()
-        collide = self.hitbox.collidepoint(point)
+        """
+        Красит кнопку в нужный цвет.
+        :param event: Действия пользователя
+        """
+        collide = super().check_collision()
         if collide:
             self.button_texture = self.hover_texture
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -90,20 +105,23 @@ class Button(Clickable):
             self.button_texture = self.default_texture
 
     def render(self, screen: pygame.display) -> None:
+        """
+        Выводит кнопку на экран.
+        :param screen: Разрешение выводимого окна
+        """
         center_relative_to(self.inner_text.position, self.hitbox)
-
         if isinstance(self.button_texture, tuple):
             pygame.draw.rect(screen, self.button_texture, self.hitbox)
-            self.inner_text.render(screen)
-        else:
+        elif isinstance(self.button_texture, str):
             img = pygame.image.load(self.button_texture)
             img = pygame.transform.scale(img, (self.hitbox[2], self.hitbox[3]))
             screen.blit(img, self.hitbox)
-            self.inner_text.render(screen)
+
+        self.inner_text.render(screen)
 
     def __repr__(self):
-        return (f'{self.inner_text}, {self.default_texture}, {self.hover_texture},'
-                f'{self.click_texture}, {self.onClick}, {self.args}, {self.hitbox}')
+        return (f'Button("{self.inner_text}", {self.hitbox},{self.default_texture}, {self.hover_texture},'
+                f'{self.click_texture}, {self.onClick} {self.args})')
 
     def __str__(self):
-        return f'{self.inner_text}, {self.default_texture}, {self.hover_texture}, {self.click_texture}'
+        return f'"{self.inner_text}", {self.hitbox}, {self.default_texture}, {self.hover_texture}, {self.click_texture}'

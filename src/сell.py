@@ -1,6 +1,6 @@
+from typing import Callable
 from pygame.locals import Rect
 import pygame
-from typing import Callable
 
 
 class Coord:
@@ -30,7 +30,7 @@ class Coord:
 
 
 class Cell:
-    def __init__(self, position: Coord, content: int = 0, weight: int = 0, ) -> None:
+    def __init__(self, position: Coord, content: int = 0, weight: int = 0) -> None:
         """
 
         :param content Content in the cell:
@@ -56,11 +56,18 @@ class Clickable:
         self.args = args
         self.hitbox = hitbox
 
-    def process(self) -> None:
+    def check_collision(self) -> bool:
         """
-        checks collision and calls callback
+        Checks collision.
+        :return: Rect collision with mouse
         """
         point = pygame.mouse.get_pos()
         collide = self.hitbox.collidepoint(point)
-        if collide:
+        return collide
+
+    def process(self) -> None:
+        """
+        Calls callback
+        """
+        if self.check_collision():
             self.onClick(*self.args)
