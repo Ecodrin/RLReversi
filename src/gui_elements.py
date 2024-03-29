@@ -1,4 +1,6 @@
 import pygame
+from pygame.locals import Rect
+from typing import Callable, Union
 from gui_utility import center_relative_to
 from сell import Clickable
 from typing import Union
