@@ -39,12 +39,9 @@ class StylizedText:
         :param screen: Разрешение выводимого окна.
         """
         bold, italic = self.__is_bold(), self.__is_italic()
-        if self.font_family in pygame.font.get_fonts():
-            font = pygame.font.SysFont(self.font_family, self.font_size, italic=italic, bold=bold)
-        else:
-            font = pygame.font.Font(self.font_family, self.font_size)
-            font.set_italic(italic == 2)
-            font.set_bold(bold == 1)
+        font = pygame.font.Font(self.font_family, self.font_size)
+        font.set_italic(italic == 2)
+        font.set_bold(bold == 1)
         text_surface = font.render(self.content, True, self.text_colour)
         screen.blit(text_surface, self.position)
 
@@ -54,3 +51,41 @@ class StylizedText:
 
     def __str__(self):
         return f'("{self.content}", {self.font_size}, {self.text_colour})'
+
+
+
+
+from pygame.locals import *
+pygame.init()
+screen = pygame.display.set_mode((800, 600))
+clock = pygame.time.Clock()
+rect = pygame.Rect(300, 200, 200, 100)
+
+text_content = "Hello, World!"
+text_position = Rect(100, 100, 100, 100)
+text_colour = (0, 0, 0)
+font_family = "arial"
+font_size = 36
+font_style = 3
+
+stylized_text = StylizedText(
+    content=text_content,
+    position=text_position,
+    text_colour=text_colour,
+    font_family=font_family,
+    font_size=font_size,
+    font_style=font_style
+)
+
+screen.fill((255, 255, 255))
+running = True
+stylized_text.render(screen)
+pygame.display.flip()
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    pygame.time.Clock().tick()
+
+pygame.quit()
