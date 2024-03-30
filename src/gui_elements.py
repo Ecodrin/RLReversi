@@ -43,9 +43,12 @@ class StylizedText:
         :return: Объект текста.
         """
         bold, italic = self.__is_bold(), self.__is_italic()
-        font = pygame.font.Font(pygame.font.match_font(self.font_family), self.font_size)
-        font.set_bold(bold == 1)
-        font.set_italic(italic == 2)
+        if self.font_family in pygame.font.get_fonts():
+            font = pygame.font.SysFont(self.font_family, self.font_size, italic=italic, bold=bold)
+        else:
+            font = pygame.font.Font(self.font_family, self.font_size)
+            font.set_bold(bold == 1)
+            font.set_italic(italic == 2)
         text_surface = font.render(self.content, True, self.text_colour)
         self.position[2], self.position[3] = text_surface.get_width(), text_surface.get_height()
         return text_surface
