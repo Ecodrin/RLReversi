@@ -39,7 +39,9 @@ class StylizedText:
         :param screen: Разрешение выводимого окна.
         """
         bold, italic = self.__is_bold(), self.__is_italic()
-        font = pygame.font.SysFont(self.font_family, self.font_size, bold=bold, italic=italic)
+        font = pygame.font.Font(self.font_family, self.font_size)
+        font.set_italic(italic == 2)
+        font.set_bold(bold == 1)
         text_surface = font.render(self.content, True, self.text_colour)
         screen.blit(text_surface, self.position)
 
