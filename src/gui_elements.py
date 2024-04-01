@@ -75,7 +75,8 @@ class Button(Clickable):
                  inner_text: StylizedText,
                  default_texture: tuple | str = (255, 255, 255),
                  hover_texture: tuple | str = (160, 160, 160),
-                 click_texture: tuple | str = (64, 64, 64)) -> None:
+                 click_texture: tuple | str = (64, 64, 64),
+                 border_radius: int = 0) -> None:
 
         """
         :param onClick (callback function):
@@ -92,6 +93,7 @@ class Button(Clickable):
         self.hover_texture: tuple | str = hover_texture
         self.click_texture: tuple | str = click_texture
         self.button_texture: tuple | str = self.default_texture
+        self.border_radius: int = border_radius
 
     def hover_click(self, event: pygame.event) -> None:
         """
@@ -115,13 +117,12 @@ class Button(Clickable):
         :param screen: Разрешение выводимого окна
         """
         center_relative_to(self.inner_text.position, self.hitbox)
-        if isinstance(self.button_texture, tuple):
-            pygame.draw.rect(screen, self.button_texture, self.hitbox)
+        if isinstance(self.button_texture, tuple | pygame.color.Color):
+            pygame.draw.rect(screen, self.button_texture, self.hitbox, 0, border_radius=self.border_radius)
         elif isinstance(self.button_texture, str):
             img = pygame.image.load(self.button_texture)
             img = pygame.transform.scale(img, (self.hitbox[2], self.hitbox[3]))
             screen.blit(img, self.hitbox)
-
         self.inner_text.render(screen)
 
     def __repr__(self):
