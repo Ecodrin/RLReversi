@@ -7,7 +7,7 @@ from сell import Clickable
 
 
 class StylizedText:
-    def __init__(self, content: str = '', position: pygame.Rect = (), text_colour: tuple = (0, 0, 0),
+    def __init__(self, position: pygame.Rect, content: str = '', text_colour: tuple = (0, 0, 0),
                  font_family: str = 'arial', font_size: int = 24,
                  font_style: int = 0, borders: pygame.Rect = (0, 0, 0, 0)) -> None:
         """
@@ -81,7 +81,7 @@ class StylizedText:
             y_offset += self.font_size
 
     def __repr__(self):
-        return (f'StylizedText({self.content}, {self.position} ,{self.text_colour}, '
+        return (f'StylizedText("{self.content}", {self.position} ,{self.text_colour}, '
                 f'{self.font_family}, {self.font_size}, {self.font_style})')
 
     def __str__(self):
