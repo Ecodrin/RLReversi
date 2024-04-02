@@ -1,5 +1,5 @@
+import os
 import pygame
-import re
 from typing import Callable
 from pygame.locals import Rect
 from gui_utility import center_relative_to
@@ -7,9 +7,10 @@ from сell import Clickable
 
 
 class StylizedText:
-    def __init__(self, position: pygame.Rect, content: str = '', text_colour: tuple = (0, 0, 0),
+    def __init__(self, position: pygame.Rect, borders: pygame.Rect, content: str = '',
+                 text_colour: pygame.color.Color = pygame.color.Color(255, 255, 255),
                  font_family: str = 'arial', font_size: int = 24,
-                 font_style: int = 0, borders: pygame.Rect = (0, 0, 0, 0)) -> None:
+                 font_style: int = 0) -> None:
         """
         :param content: Содержимое.
         :param position: Позиция.
@@ -20,9 +21,9 @@ class StylizedText:
         :param borders: Границы Кнопки (special for button).
         :return:
         """
-        self.content: str = content
         self.position: pygame.Rect = position
-        self.text_colour: tuple = text_colour
+        self.content: str = content
+        self.text_colour: pygame.color.Color = text_colour
         self.font_family: str = font_family
         self.font_size: int = font_size
         self.font_style: int = font_style
@@ -88,25 +89,13 @@ class StylizedText:
         return f'("{self.content}", {self.font_size}, {self.text_colour})'
 
 
-# Функция для проверки строки на hex задачу цвета.
-def hex_check(s: str) -> bool:
-    if s is None:
-        return False
-
-    if re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', s):
-        return True
-
-    return False
-
-
 class Button(Clickable):
 
     def __init__(self, onClick: Callable, *args,
-                 hitbox: Rect = pygame.Rect(0, 0, 0, 0),
-                 inner_text: StylizedText = StylizedText(content=''),
-                 default_texture: tuple | str = (255, 255, 255),
-                 hover_texture: tuple | str = (160, 160, 160),
-                 click_texture: tuple | str = (64, 64, 64),
+                 hitbox: Rect, inner_text: StylizedText,
+                 default_texture: pygame.color.Color | os.PathLike = pygame.color.Color(255, 255, 255),
+                 hover_texture: pygame.color.Color | os.PathLike = pygame.color.Color(160, 160, 160),
+                 click_texture: pygame.color.Color | os.PathLike = pygame.color.Color(64, 64, 64),
                  border_radius: int = 0) -> None:
 
         """
@@ -121,10 +110,10 @@ class Button(Clickable):
         """
         super().__init__(onClick, *args, hitbox=hitbox)
         self.inner_text: StylizedText = inner_text
-        self.default_texture: tuple | str = default_texture
-        self.hover_texture: tuple | str = hover_texture
-        self.click_texture: tuple | str = click_texture
-        self.button_texture: tuple | str = self.default_texture
+        self.default_texture: pygame.color.Color | os.PathLike = default_texture
+        self.hover_texture: pygame.color.Color | os.PathLike = hover_texture
+        self.click_texture: pygame.color.Color | os.PathLike = click_texture
+        self.button_texture: pygame.color.Color | os.PathLike = self.default_texture
         self.border_radius: int = border_radius
 
     def hover_click(self, event: pygame.event) -> None:
@@ -149,10 +138,9 @@ class Button(Clickable):
         :param screen: Разрешение выводимого окна
         """
         center_relative_to(self.inner_text.position, self.hitbox)
-        if (isinstance(self.button_texture, tuple) or
-                (isinstance(self.button_texture, str) and hex_check(self.button_texture))):
+        if isinstance(self.button_texture, pygame.color.Color):
             pygame.draw.rect(screen, self.button_texture, self.hitbox, 0, border_radius=self.border_radius)
-        elif isinstance(self.button_texture, str):
+        elif isinstance(self.button_texture, os.PathLike):
             img = pygame.image.load(self.button_texture)
             img = pygame.transform.scale(img, (self.hitbox[2], self.hitbox[3]))
             screen.blit(img, self.hitbox)
