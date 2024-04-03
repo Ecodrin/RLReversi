@@ -3,11 +3,11 @@ import pygame
 from typing import Callable
 from pygame.locals import Rect
 from gui_utility import center_relative_to
-from сell import Clickable
+from cell import Clickable
 
 
 class StylizedText:
-    def __init__(self, position: pygame.Rect, borders: pygame.Rect, content: str = '',
+    def __init__(self, position: pygame.Rect, content: str = '',
                  text_colour: pygame.color.Color = pygame.color.Color(255, 255, 255),
                  font_family: str = 'arial', font_size: int = 24,
                  font_style: int = 0) -> None:
@@ -18,7 +18,6 @@ class StylizedText:
         :param font_family: Шрифт текста.
         :param font_size: Размер текста.
         :param font_style: Стиль текста. Задаётся битовой маской: 0b01 - жирный, 0b10 - курсив.
-        :param borders: Границы Кнопки (special for button).
         :return:
         """
         self.position: pygame.Rect = position
@@ -27,7 +26,6 @@ class StylizedText:
         self.font_family: str = font_family
         self.font_size: int = font_size
         self.font_style: int = font_style
-        self.borders: pygame.Rect = borders
 
     def __is_italic(self) -> int:
         """
@@ -41,45 +39,69 @@ class StylizedText:
         """
         return self.font_style & 0b01
 
-    def render(self, screen: pygame.display) -> None:
+    def __is_underline(self) -> int:
         """
-        Отображает текст с заданным стилем и позицией.
-        :param screen: Разрешение выводимого окна.
+        :return: Разряд отвечающий за подчёркивание.
         """
+        return self.font_style & 0b100
 
-        bold, italic = self.__is_bold(), self.__is_italic()
+    def __create_font(self) -> pygame.font.Font:
+        """
+        Создаёт шрифт исходя из входных данных.
+        :return Возвращает созданный шрифт.
+        """
+        bold, italic, underline = self.__is_bold(), self.__is_italic(), self.__is_underline()
         if self.font_family in pygame.font.get_fonts():
             font = pygame.font.SysFont(self.font_family, self.font_size, italic=italic, bold=bold)
         else:
             font = pygame.font.Font(self.font_family, self.font_size)
             font.set_bold(bold == 1)
             font.set_italic(italic == 2)
+            font.set_underline(underline == 4)
 
+        return font
+
+    def __create_text(self) -> list[tuple[pygame.SurfaceType, pygame.Rect]]:
+        """
+        Создаёт отцентрованный и поделенный на строки текст.
+        :return: Список кортежей (контент, позиция).
+        """
         words = self.content.split()
         lines = []
         line = ''
         line_width = 0
-
+        font = self.__create_font()
         for word in words:
-            word_surface = font.render(word, True, self.text_colour)
-            word_width = word_surface.get_width()
-            if line_width + word_width >= self.borders[2]:
+            word_width = font.size(word + ' ')[0]
+            if line_width + word_width >= self.position[2]:
                 lines.append(line)
                 line = word + ' '
                 line_width = word_width
             else:
                 line += word + ' '
                 line_width += word_width
-            print(line)
+
         lines.append(line)
 
-        y_offset = self.position[1] + (self.borders[3] - len(lines) * self.font_size) // 2
-        for line in lines:
-            text_surface = font.render(line, True, self.text_colour)
-            text_rect = text_surface.get_rect(center=(self.position[0] + self.position[2] // 2,
-                                                      y_offset + self.font_size // 2))
-            screen.blit(text_surface, text_rect)
+        surfaces = []
+        y_offset = self.position[1] + (self.position[3] - len(lines) * self.font_size) // 2
+        for text_line in lines:
+            text_surface = font.render(text_line, True, self.text_colour)
+            center = (self.position[0] + self.position[2] // 2, y_offset + font.size(text_line)[1] // 2)
+            text_rect = text_surface.get_rect(center=center)
+            surfaces.append((text_surface, text_rect))
             y_offset += self.font_size
+
+        return surfaces
+
+    def render(self, screen: pygame.display) -> None:
+        """
+        Отображает текст с заданным стилем и позицией.
+        :param screen: Разрешение выводимого окна.
+        """
+        surface_lines = self.__create_text()
+        for surface in surface_lines:
+            screen.blit(surface[0], surface[1])
 
     def __repr__(self):
         return (f'StylizedText("{self.content}", {self.position} ,{self.text_colour}, '
@@ -132,6 +154,11 @@ class Button(Clickable):
         else:
             self.button_texture = self.default_texture
 
+    def _create_button_img(self) -> pygame.SurfaceType:
+        img = pygame.image.load(self.button_texture)
+        img = pygame.transform.scale(img, (self.hitbox[2], self.hitbox[3]))
+        return img
+
     def render(self, screen: pygame.display) -> None:
         """
         Выводит кнопку на экран.
@@ -141,8 +168,7 @@ class Button(Clickable):
         if isinstance(self.button_texture, pygame.color.Color):
             pygame.draw.rect(screen, self.button_texture, self.hitbox, 0, border_radius=self.border_radius)
         elif isinstance(self.button_texture, os.PathLike):
-            img = pygame.image.load(self.button_texture)
-            img = pygame.transform.scale(img, (self.hitbox[2], self.hitbox[3]))
+            img = self._create_button_img()
             screen.blit(img, self.hitbox)
         else:
             raise TypeError('Invalid texture type')
@@ -153,4 +179,5 @@ class Button(Clickable):
                 f'{self.click_texture}, {self.onClick} {self.args})')
 
     def __str__(self):
-        return f'"{self.inner_text}", {self.hitbox}, {self.default_texture}, {self.hover_texture}, {self.click_texture}'
+        return (f'("{self.inner_text}", {self.hitbox}, {self.default_texture},'
+                f'{self.hover_texture}, {self.click_texture})')

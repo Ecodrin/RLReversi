@@ -5,7 +5,8 @@ import pygame
 
 class Coord:
     def __init__(self, x: int = 0, y: int = 0) -> None:
-        self.x, self.y = x, y
+        self.x: int = x
+        self.y: int = y
 
     def __str__(self):
         return f'({self.x}, {self.y})'
@@ -37,11 +38,11 @@ class Cell:
         :param weight:
         :param coord Coordinates of the cell:
         """
-        self.position = position
-        self.content = content
-        self.weight = weight
-        self.index = position.x + position.y * 8
-        self.possible_moves = []
+        self.position: Coord = position
+        self.content: int = content
+        self.weight: int = weight
+        self.index: int = position.x + position.y * 8
+        self.possible_moves: list = []
 
 
 class Clickable:
@@ -52,9 +53,9 @@ class Clickable:
         :param *args (arguments for callback function):
         :param  hitbox (rectangular):
         """
-        self.onClick = onClick
+        self.onClick: Callable = onClick
         self.args = args
-        self.hitbox = hitbox
+        self.hitbox: pygame.Rect = hitbox
 
     def check_collision(self) -> bool:
         """
