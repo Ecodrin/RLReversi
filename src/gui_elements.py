@@ -17,15 +17,28 @@ class StylizedText:
         :param text_colour: Цвет.
         :param font_family: Шрифт текста.
         :param font_size: Размер текста.
-        :param font_style: Стиль текста. Задаётся битовой маской: 0b01 - жирный, 0b10 - курсив.
+        :param font_style: Стиль текста. Задаётся битовой маской: 0b01 - жирный, 0b10 - курсив, 0b100 - подчёркивание.
         :return:
         """
         self.position: pygame.Rect = position
-        self.content: str = content
+        self._content: str = content
         self.text_colour: pygame.color.Color = text_colour
         self.font_family: str = font_family
         self.font_size: int = font_size
         self.font_style: int = font_style
+        self.__text: list[tuple[pygame.SurfaceType, pygame.Rect]] = self.__create_text()
+
+    @property
+    def content(self) -> str:
+        return self._content
+
+    @content.setter
+    def content(self, text: str) -> None:
+        if text is None:
+            raise TypeError('content must be str')
+
+        self._content = text
+        self.__text = self.__create_text()
 
     def __is_italic(self) -> int:
         """
@@ -51,13 +64,15 @@ class StylizedText:
         :return Возвращает созданный шрифт.
         """
         bold, italic, underline = self.__is_bold(), self.__is_italic(), self.__is_underline()
+        # Если шрифт есть в системных, то он создаётся специальной функцией.
         if self.font_family in pygame.font.get_fonts():
-            font = pygame.font.SysFont(self.font_family, self.font_size, italic=italic, bold=bold)
+            font = pygame.font.SysFont(self.font_family, self.font_size)
         else:
             font = pygame.font.Font(self.font_family, self.font_size)
-            font.set_bold(bold == 1)
-            font.set_italic(italic == 2)
-            font.set_underline(underline == 4)
+
+        font.set_bold(bold)
+        font.set_italic(italic)
+        font.set_underline(underline)
 
         return font
 
@@ -66,25 +81,27 @@ class StylizedText:
         Создаёт отцентрованный и поделенный на строки текст.
         :return: Список кортежей (контент, позиция).
         """
-        words = self.content.split()
+        words = self._content.split()
         lines = []
         line = ''
         line_width = 0
         font = self.__create_font()
         for word in words:
             word_width = font.size(word + ' ')[0]
+            # Проверка на выход за границы позиции.
             if line_width + word_width >= self.position[2]:
                 lines.append(line)
                 line = word + ' '
                 line_width = word_width
-            else:
-                line += word + ' '
-                line_width += word_width
+
+            line += word + ' '
+            line_width += word_width
 
         lines.append(line)
 
-        surfaces = []
+        # Изначальное смещение по y.
         y_offset = self.position[1] + (self.position[3] - len(lines) * self.font_size) // 2
+        surfaces = []
         for text_line in lines:
             text_surface = font.render(text_line, True, self.text_colour)
             center = (self.position[0] + self.position[2] // 2, y_offset + font.size(text_line)[1] // 2)
@@ -97,18 +114,17 @@ class StylizedText:
     def render(self, screen: pygame.display) -> None:
         """
         Отображает текст с заданным стилем и позицией.
-        :param screen: Разрешение выводимого окна.
+        :param screen: Объект дисплея для обновления содержимого.
         """
-        surface_lines = self.__create_text()
-        for surface in surface_lines:
-            screen.blit(surface[0], surface[1])
+        for surface, position in self.__text:
+            screen.blit(surface, position)
 
     def __repr__(self):
-        return (f'StylizedText("{self.content}", {self.position} ,{self.text_colour}, '
+        return (f'StylizedText("{self._content}", {self.position} ,{self.text_colour}, '
                 f'{self.font_family}, {self.font_size}, {self.font_style})')
 
     def __str__(self):
-        return f'("{self.content}", {self.font_size}, {self.text_colour})'
+        return f'("{self._content}", {self.font_size}, {self.text_colour})'
 
 
 class Button(Clickable):
@@ -154,30 +170,28 @@ class Button(Clickable):
         else:
             self.button_texture = self.default_texture
 
-    def _create_button_img(self) -> pygame.SurfaceType:
-        img = pygame.image.load(self.button_texture)
-        img = pygame.transform.scale(img, (self.hitbox[2], self.hitbox[3]))
-        return img
-
-    def render(self, screen: pygame.display) -> None:
+    def render(self, screen) -> None:
         """
         Выводит кнопку на экран.
-        :param screen: Разрешение выводимого окна
+        :param screen: Объект дисплея для обновления содержимого.
         """
         center_relative_to(self.inner_text.position, self.hitbox)
         if isinstance(self.button_texture, pygame.color.Color):
             pygame.draw.rect(screen, self.button_texture, self.hitbox, 0, border_radius=self.border_radius)
         elif isinstance(self.button_texture, os.PathLike):
-            img = self._create_button_img()
+            img = pygame.image.load(self.button_texture)
+            img = pygame.transform.scale(img, (self.hitbox[2], self.hitbox[3]))
             screen.blit(img, self.hitbox)
         else:
             raise TypeError('Invalid texture type')
+
         self.inner_text.render(screen)
 
     def __repr__(self):
-        return (f'Button("{self.inner_text}", {self.hitbox},{self.default_texture}, {self.hover_texture},'
-                f'{self.click_texture}, {self.onClick} {self.args})')
+        return (f'Button("Text{self.inner_text}", Hitbox{self.hitbox}, def_tex{self.default_texture},'
+                f'hov_tex{self.hover_texture},'
+                f'click_tex{self.click_texture}, func{self.onClick} args{self.args})')
 
     def __str__(self):
-        return (f'("{self.inner_text}", {self.hitbox}, {self.default_texture},'
-                f'{self.hover_texture}, {self.click_texture})')
+        return (f'("Text{self.inner_text}", Hitbox{self.hitbox}, def_tex{self.default_texture},'
+                f'hov_tex{self.hover_texture}, click_tex{self.click_texture})')
