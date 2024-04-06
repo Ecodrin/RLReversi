@@ -135,11 +135,11 @@ class StylizedText:
             screen.blit(surface, position)
 
     def __repr__(self) -> str:
-        return (f'StylizedText("Text{self._content}", Pos{self.position} ,Colour{self.text_colour}, '
-                f'Family{self.font_family}, Size{self.font_size}, Style{self.font_style})')
+        return (f'StylizedText\nText {self._content}\nPos {self.position}\nColour {self.text_colour}'
+                f'\n{self.font_family}\nSize {self.font_size}\nStyle {self.font_style}\n')
 
     def __str__(self) -> str:
-        return f'("Text{self._content}", Size{self.font_size}, Colour{self.text_colour})'
+        return f'"Text {self._content}\nSize {self.font_size}\nColour {self.text_colour}'
 
 
 class Button(Clickable):
@@ -178,9 +178,10 @@ class Button(Clickable):
         collide = super().check_collision()
         # Проверка на коллизию мышки с кнопкой.
         if collide:
-            self.button_texture = self.hover_texture
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.button_texture = self.click_texture
+            else:
+                self.button_texture = self.hover_texture
 
         else:
             self.button_texture = self.default_texture
@@ -195,11 +196,12 @@ class Button(Clickable):
             pygame.draw.rect(screen, self.button_texture, self.hitbox, width=0,
                              border_radius=self.border_radius)
         elif isinstance(self.button_texture, os.PathLike):
-            # Кэшировние изображений, которые уже были зарендерины.
+            # Кэшировние изображений, которые уже были зарендерены.
             if self.button_texture not in self._image_cache:
                 img = pygame.image.load(self.button_texture).convert_alpha()
                 if img.get_size() != (self.hitbox[2], self.hitbox[3]):
-                    img = pygame.transform.smoothscale(img.convert_alpha(), (self.hitbox[2], self.hitbox[3]))
+                    img = pygame.transform.smoothscale(img, (self.hitbox[2], self.hitbox[3]))
+                    self._image_cache.clear()
                     self._image_cache[self.button_texture] = img
             else:
                 img = self._image_cache[self.button_texture]
@@ -212,10 +214,9 @@ class Button(Clickable):
         self.inner_text.render(screen)
 
     def __repr__(self) -> str:
-        return (f'Button("Text{self.inner_text}", Hitbox{self.hitbox}, def_tex{self.default_texture},'
-                f'hov_tex{self.hover_texture},'
-                f'click_tex{self.click_texture}, func{self.onClick} args{self.args})')
+        return (f'Button (Text{repr(self.inner_text)}Hitbox {self.hitbox}\ndef_tex {self.default_texture}'
+                f'\nhov_tex {self.hover_texture}\nclick_tex {self.click_texture}\nfunc {self.onClick} args{self.args})')
 
     def __str__(self) -> str:
-        return (f'("Text{self.inner_text}", Hitbox{self.hitbox}, def_tex{self.default_texture},'
-                f'hov_tex{self.hover_texture}, click_tex{self.click_texture})')
+        return (f'("Text{self.inner_text}"\nHitbox {self.hitbox}\ndef_tex {self.default_texture}'
+                f'\nhov_tex {self.hover_texture}\nclick_tex {self.click_texture})\n')
