@@ -1,6 +1,7 @@
+import pygame
+
 from typing import Callable
 from pygame.locals import Rect
-import pygame
 
 
 class Coord:
@@ -51,7 +52,7 @@ class Clickable:
         Clickable (property)
         :param onClick (callback function):
         :param *args (arguments for callback function):
-        :param  hitbox (rectangular):
+        :param hitbox (rectangular):
         """
         self.onClick: Callable = onClick
         self.args = args

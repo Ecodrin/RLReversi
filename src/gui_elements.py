@@ -1,7 +1,9 @@
 import os
 import pygame
+
 from typing import Callable
 from pygame.locals import Rect
+
 from gui_utility import center_relative_to
 from cell import Clickable
 
@@ -17,7 +19,7 @@ class StylizedText:
         :param text_colour: Цвет.
         :param font_family: Шрифт текста.
         :param font_size: Размер текста.
-        :param font_style: Стиль текста. Задаётся битовой маской: 0b01 - жирный, 0b10 - курсив, 0b100 - подчёркивание.
+        :param font_style: Стиль текста. Задаётся битовой маской: 0b01 - жирный, 0b010 - курсив, 0b0100 - подчёркивание.
         :return:
         """
         self._position: pygame.Rect = position
@@ -34,8 +36,8 @@ class StylizedText:
 
     @content.setter
     def content(self, text: str) -> None:
-        if text is None:
-            raise TypeError('content must be str')
+        if not isinstance(text, str):
+            raise TypeError('Content must be a string type')
 
         self._content = text
         self.__text = self.__create_text()
@@ -46,16 +48,10 @@ class StylizedText:
 
     @position.setter
     def position(self, pos: pygame.Rect) -> None:
-        if pos is None:
-            raise TypeError('pos must be RectType')
+        if not isinstance(pos, pygame.Rect):
+            raise TypeError('Pos must be a RectType')
         self._position = pos
         self.__text = self.__create_text()
-
-    def __is_italic(self) -> int:
-        """
-        :return: Разряд отвечающий за курсив.
-        """
-        return self.font_style & 0b10
 
     def __is_bold(self) -> int:
         """
@@ -63,11 +59,17 @@ class StylizedText:
         """
         return self.font_style & 0b01
 
+    def __is_italic(self) -> int:
+        """
+        :return: Разряд отвечающий за курсив.
+        """
+        return self.font_style & 0b010
+
     def __is_underline(self) -> int:
         """
         :return: Разряд отвечающий за подчёркивание.
         """
-        return self.font_style & 0b100
+        return self.font_style & 0b0100
 
     def __create_font(self) -> pygame.font.Font:
         """
@@ -110,14 +112,16 @@ class StylizedText:
 
         lines.append(line)
 
-        # Изначальное смещение по y.
+        # Вычисление начального смещения по y для центрирования текста по вертикали.
         y_offset = self.position[1] + (self.position[3] - len(lines) * self.font_size) // 2
         surfaces = []
         for text_line in lines:
-            text_surface = font.render(text_line, True, self.text_colour)
+            text_surface = font.render(text=text_line, antialias=True, color=self.text_colour)
+            # Вычисление центра текстуры.
             center = (self.position[0] + self.position[2] // 2, y_offset + font.size(text_line)[1] // 2)
             text_rect = text_surface.get_rect(center=center)
             surfaces.append((text_surface, text_rect))
+            # Обновление смещения по y для следующей строки текста.
             y_offset += self.font_size
 
         return surfaces
@@ -131,11 +135,11 @@ class StylizedText:
             screen.blit(surface, position)
 
     def __repr__(self) -> str:
-        return (f'StylizedText("{self._content}", {self.position} ,{self.text_colour}, '
-                f'{self.font_family}, {self.font_size}, {self.font_style})')
+        return (f'StylizedText("Text{self._content}", Pos{self.position} ,Colour{self.text_colour}, '
+                f'Family{self.font_family}, Size{self.font_size}, Style{self.font_style})')
 
     def __str__(self) -> str:
-        return f'("{self._content}", {self.font_size}, {self.text_colour})'
+        return f'("Text{self._content}", Size{self.font_size}, Colour{self.text_colour})'
 
 
 class Button(Clickable):
@@ -176,8 +180,6 @@ class Button(Clickable):
             self.button_texture = self.hover_texture
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.button_texture = self.click_texture
-            elif event.type == pygame.MOUSEBUTTONUP:
-                self.button_texture = self.hover_texture
 
         else:
             self.button_texture = self.default_texture
@@ -189,14 +191,14 @@ class Button(Clickable):
         """
         self.inner_text.position = center_relative_to(self.inner_text.position, self.hitbox)
         if isinstance(self.button_texture, pygame.color.Color):
-            pygame.draw.rect(screen, self.button_texture, self.hitbox, 0,
+            pygame.draw.rect(screen, self.button_texture, self.hitbox, width=0,
                              border_radius=self.border_radius)
         elif isinstance(self.button_texture, os.PathLike):
             # Кэшировние изображений, которые уже были зарендерины.
             if self.button_texture not in self._image_cache:
                 img = pygame.image.load(self.button_texture).convert_alpha()
                 if img.get_size() != (self.hitbox[2], self.hitbox[3]):
-                    img = pygame.transform.smoothscale(img, (self.hitbox[2], self.hitbox[3]))
+                    img = pygame.transform.smoothscale(img.convert_alpha(), (self.hitbox[2], self.hitbox[3]))
                     self._image_cache[self.button_texture] = img
             else:
                 img = self._image_cache[self.button_texture]
