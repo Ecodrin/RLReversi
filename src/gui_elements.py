@@ -19,7 +19,7 @@ class StylizedText:
         :param text_colour: Цвет.
         :param font_family: Шрифт текста.
         :param font_size: Размер текста.
-        :param font_style: Стиль текста. Задаётся битовой маской: 0b01 - жирный, 0b010 - курсив, 0b0100 - подчёркивание.
+        :param font_style: Стиль текста. Задаётся битовой маской: 0b001 - жирный, 0b010 - курсив, 0b0100 - подчёркивание.
         :return:
         """
         self._position: pygame.Rect = position
