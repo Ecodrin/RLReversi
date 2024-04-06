@@ -57,7 +57,7 @@ class StylizedText:
         """
         :return: Разряд отвечающий за жирность.
         """
-        return self.font_style & 0b01
+        return self.font_style & 0b001
 
     def __is_italic(self) -> int:
         """
