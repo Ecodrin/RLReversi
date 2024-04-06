@@ -102,8 +102,8 @@ class StylizedText:
             # Проверка на выход за границы позиции.
             if line_width + word_width >= self.position[2]:
                 lines.append(line)
-                line = word + ' '
-                line_width = word_width
+                line = ''
+                line_width = 0
 
             line += word + ' '
             line_width += word_width
