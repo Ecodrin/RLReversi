@@ -20,7 +20,7 @@ class StylizedText:
         :param font_style: Стиль текста. Задаётся битовой маской: 0b01 - жирный, 0b10 - курсив, 0b100 - подчёркивание.
         :return:
         """
-        self.position: pygame.Rect = position
+        self._position: pygame.Rect = position
         self._content: str = content
         self.text_colour: pygame.color.Color = text_colour
         self.font_family: str = font_family
@@ -38,6 +38,17 @@ class StylizedText:
             raise TypeError('content must be str')
 
         self._content = text
+        self.__text = self.__create_text()
+
+    @property
+    def position(self) -> pygame.Rect:
+        return self._position
+
+    @position.setter
+    def position(self, pos: pygame.Rect) -> None:
+        if pos is None:
+            raise TypeError('pos must be RectType')
+        self._position = pos
         self.__text = self.__create_text()
 
     def __is_italic(self) -> int:
@@ -119,11 +130,11 @@ class StylizedText:
         for surface, position in self.__text:
             screen.blit(surface, position)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (f'StylizedText("{self._content}", {self.position} ,{self.text_colour}, '
                 f'{self.font_family}, {self.font_size}, {self.font_style})')
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'("{self._content}", {self.font_size}, {self.text_colour})'
 
 
@@ -153,6 +164,7 @@ class Button(Clickable):
         self.click_texture: pygame.color.Color | os.PathLike = click_texture
         self.button_texture: pygame.color.Color | os.PathLike = self.default_texture
         self.border_radius: int = border_radius
+        self._image_cache: dict = {}
 
     def hover_click(self, event: pygame.event) -> None:
         """
@@ -170,28 +182,36 @@ class Button(Clickable):
         else:
             self.button_texture = self.default_texture
 
-    def render(self, screen) -> None:
+    def render(self, screen: pygame.surface) -> None:
         """
         Выводит кнопку на экран.
         :param screen: Объект дисплея для обновления содержимого.
         """
-        center_relative_to(self.inner_text.position, self.hitbox)
+        self.inner_text.position = center_relative_to(self.inner_text.position, self.hitbox)
         if isinstance(self.button_texture, pygame.color.Color):
-            pygame.draw.rect(screen, self.button_texture, self.hitbox, 0, border_radius=self.border_radius)
+            pygame.draw.rect(screen, self.button_texture, self.hitbox, 0,
+                             border_radius=self.border_radius)
         elif isinstance(self.button_texture, os.PathLike):
-            img = pygame.image.load(self.button_texture)
-            img = pygame.transform.scale(img, (self.hitbox[2], self.hitbox[3]))
+            # Кэшировние изображений, которые уже были зарендерины.
+            if self.button_texture not in self._image_cache:
+                img = pygame.image.load(self.button_texture).convert_alpha()
+                if img.get_size() != (self.hitbox[2], self.hitbox[3]):
+                    img = pygame.transform.smoothscale(img, (self.hitbox[2], self.hitbox[3]))
+                    self._image_cache[self.button_texture] = img
+            else:
+                img = self._image_cache[self.button_texture]
             screen.blit(img, self.hitbox)
+
         else:
             raise TypeError('Invalid texture type')
 
         self.inner_text.render(screen)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (f'Button("Text{self.inner_text}", Hitbox{self.hitbox}, def_tex{self.default_texture},'
                 f'hov_tex{self.hover_texture},'
                 f'click_tex{self.click_texture}, func{self.onClick} args{self.args})')
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (f'("Text{self.inner_text}", Hitbox{self.hitbox}, def_tex{self.default_texture},'
                 f'hov_tex{self.hover_texture}, click_tex{self.click_texture})')
