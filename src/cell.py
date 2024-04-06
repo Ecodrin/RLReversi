@@ -12,7 +12,7 @@ class Coord:
     def __str__(self):
         return f'({self.x}, {self.y})'
 
-    def __add__(self, other):
+    def __add__(self, other) :
         new_x = self.x + other.x
         new_y = self.y + other.y
         return Coord(new_x, new_y)

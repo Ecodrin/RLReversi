@@ -86,7 +86,6 @@ class StylizedText:
         font.set_bold(bold)
         font.set_italic(italic)
         font.set_underline(underline)
-
         return font
 
     def __create_text(self) -> list[tuple[pygame.SurfaceType, pygame.Rect]]:
@@ -116,7 +115,8 @@ class StylizedText:
         y_offset = self.position[1] + (self.position[3] - len(lines) * self.font_size) // 2
         surfaces = []
         for text_line in lines:
-            text_surface = font.render(text=text_line, antialias=True, color=self.text_colour)
+            # requires antialiasing: bool
+            text_surface = font.render(text_line, True, self.text_colour)
             # Вычисление центра текстуры.
             center = (self.position[0] + self.position[2] // 2, y_offset + font.size(text_line)[1] // 2)
             text_rect = text_surface.get_rect(center=center)
@@ -176,6 +176,7 @@ class Button(Clickable):
         :param event: Действия пользователя
         """
         collide = super().check_collision()
+        # Проверка на коллизию мышки с кнопкой.
         if collide:
             self.button_texture = self.hover_texture
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -202,6 +203,7 @@ class Button(Clickable):
                     self._image_cache[self.button_texture] = img
             else:
                 img = self._image_cache[self.button_texture]
+
             screen.blit(img, self.hitbox)
 
         else:
