@@ -12,7 +12,7 @@ class Coord:
     def __str__(self):
         return f'({self.x}, {self.y})'
 
-    def __add__(self, other) :
+    def __add__(self, other):
         new_x = self.x + other.x
         new_y = self.y + other.y
         return Coord(new_x, new_y)
@@ -47,16 +47,17 @@ class Cell:
 
 
 class Clickable:
-    def __init__(self, onClick: Callable, *args, hitbox: Rect = pygame.Rect(0, 0, 0, 0)) -> None:
+
+    def __init__(self, hitbox: Rect, onClick: Callable, *args) -> None:
         """
         Clickable (property)
         :param onClick (callback function):
         :param *args (arguments for callback function):
         :param hitbox (rectangular):
         """
+        self.hitbox: pygame.Rect = hitbox
         self.onClick: Callable = onClick
         self.args = args
-        self.hitbox: pygame.Rect = hitbox
 
     def check_collision(self) -> bool:
         """
