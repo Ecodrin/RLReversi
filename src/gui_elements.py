@@ -2,7 +2,7 @@ import os
 
 import pygame
 
-from typing import Callable
+from typing import Callable, Any
 
 from gui_utility import center_relative_to
 from cell import Clickable
@@ -229,3 +229,123 @@ class Button(Clickable):
 
     def __str__(self):
         return f"Button with text '{self.inner_text}' and hitbox {self.hitbox}"
+
+
+class GroupObjectClass:
+    def __init__(self, content: list[Any],
+                 borders: pygame.Rect,
+                 direction: str = 'horizontally',
+                 margins: tuple[int, int] = (0, 0)) -> None:
+        """
+        Class for draw objects in the box
+        :param content: List of objects(ex. button or text)
+        :param borders: borders of block and its position
+        :param direction: vertically/horizontally
+        :param margins: margin: int  of pixels between elements.
+        """
+        self.__content: list[Any] = content
+        self.__borders: pygame.Rect = borders
+        self.__direction: str = direction
+        self.__margins: tuple[int, int] = margins
+        self.__count_draw_object: int = 0
+        self.__create_block()
+
+    @staticmethod
+    def __update_block(func: Callable) -> Callable:
+        """
+        Decorator for updating block
+        Decorator causes __create_block in the end every function.
+        :param func: function to be decorated
+        :return: Callable
+        """
+        def wrapper(self, *args, **kwargs) -> Any:
+            res = func(self, *args, **kwargs)
+            self.__create_block()
+            return res
+        return wrapper
+
+    @__update_block
+    def insert(self, pos: int, obj: Any) -> None:
+        """
+        Insert object at given position
+        :param pos: index of object in the list
+        :param obj: object to be inserted
+        :return: None
+        """
+        self.__content.insert(pos, obj)
+
+    @__update_block
+    def append(self, obj) -> None:
+        """
+        Append object to the list
+        :param obj:
+        self.__create_block()
+        :return:
+        """
+        self.__content.append(obj)
+
+    @__update_block
+    def pop(self, pos: int) -> object:
+        """
+        Pop object from the list
+        :param pos: index
+        :return: object
+        """
+        obj = self.__content.pop(pos)
+        return obj
+
+    def __create_block(self) -> None:
+        if self.__direction == 'horizontally':
+            margins_amendment = [self.__margins[0] + self.__borders[0], 0]
+            # if horizontally
+            amendment = 0
+        else:
+            margins_amendment = [0, self.__margins[1] + self.__borders[1]]
+            # if vertically
+            amendment = 1
+        self.__count_draw_object = 0
+        for obj in self.__content:
+            # двигаем подвижную координаты
+            obj.hitbox[amendment] = margins_amendment[amendment]
+            # центруем по заданной оси
+            obj.hitbox = center_relative_to(element=obj.hitbox, relative_to=self.__borders, mode=self.__direction)
+            # проверяем, вышло ли за стенку
+            if obj.hitbox[amendment] + obj.hitbox[amendment + 2] > self.__borders[amendment] + self.__borders[amendment + 2]\
+                    + self.__margins[amendment]:
+                break
+            self.__count_draw_object += 1
+            # увеличиваем приращение
+            margins_amendment[amendment] += self.__margins[amendment] + obj.hitbox[amendment + 2]
+
+    def hover_click(self, event: pygame.event.Event) -> None:
+        """
+        Hover click event for all objects in the box
+        :param event: Event
+        :return: None
+        """
+        i = 0
+        for obj in self.__content:
+            if i >= self.__count_draw_object:
+                break
+            obj.hover_click(event)
+            i += 1
+
+    def render(self, screen: pygame.Surface) -> None:
+        """
+        Draw all objects in the box
+        :param screen:Object Display
+        :return:None
+        """
+        i = 0
+        for obj in self.__content:
+            if i >= self.__count_draw_object:
+                break
+            obj.render(screen)
+            i += 1
+
+    def __str__(self) -> str:
+        return f'GroupObjectClass: objects: \n{list(self.__content)}\n Borders{self.__borders}'
+
+    def __repr__(self) -> str:
+        return (f'GroupObjectClass: {list(map(lambda x: repr(x), self.__content))}\n'
+                f'Borders: {self.__borders}\ndirection: {self.__direction}\nmargins: {self.__margins}\n')
