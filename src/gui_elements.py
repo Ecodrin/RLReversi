@@ -235,7 +235,7 @@ class GroupObjectClass:
     def __init__(self, content: list[Any],
                  borders: pygame.Rect,
                  direction: str = 'horizontally',
-                 margins: tuple[int, int] = (0, 0)) -> None:
+                 margins: list[int, int] = (0, 0)) -> None:
         """
         Class for draw objects in the box
         :param content: List of objects(ex. button or text)
@@ -246,8 +246,30 @@ class GroupObjectClass:
         self.__content: list[Any] = content
         self.__borders: pygame.Rect = borders
         self.__direction: str = direction
-        self.__margins: tuple[int, int] = margins
+        self.__margins: list[int, int] = margins
         self.__count_draw_object: int = 0
+        self.__create_block()
+
+    @property
+    def margins(self):
+        return self.__margins
+
+    @margins.setter
+    def margins(self, value):
+        if isinstance(value, list) == 0:
+            raise TypeError('Не тот тип данных')
+        self.__margins = value
+        self.__create_block()
+
+    @property
+    def direction(self):
+        return self.__direction
+
+    @direction.setter
+    def direction(self, value):
+        if isinstance(value, str) == 0:
+            raise TypeError('Не тот тип данных')
+        self.__direction = value
         self.__create_block()
 
     @staticmethod
