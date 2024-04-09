@@ -235,7 +235,7 @@ class GroupObjectClass:
     def __init__(self, content: list[Any],
                  borders: pygame.Rect,
                  direction: str = 'horizontally',
-                 margins: list[int, int] = (0, 0)) -> None:
+                 margins: tuple[int, int] = (0, 0)) -> None:
         """
         Class for draw objects in the box
         :param content: List of objects(ex. button or text)
@@ -246,7 +246,7 @@ class GroupObjectClass:
         self.__content: list[Any] = content
         self.__borders: pygame.Rect = borders
         self.__direction: str = direction
-        self.__margins: list[int, int] = margins
+        self.__margins: tuple[int, int] = margins
         self.__count_draw_object: int = 0
         self.__create_block()
 
@@ -256,7 +256,7 @@ class GroupObjectClass:
 
     @margins.setter
     def margins(self, value):
-        if isinstance(value, list) == 0:
+        if isinstance(value, tuple) == 0:
             raise TypeError('Не тот тип данных')
         self.__margins = value
         self.__create_block()
@@ -327,13 +327,13 @@ class GroupObjectClass:
             amendment = 1
         self.__count_draw_object = 0
         for obj in self.__content:
-            # двигаем подвижную координаты
+            # двигаем подвижную координату
             obj.hitbox[amendment] = margins_amendment[amendment]
             # центруем по заданной оси
             obj.hitbox = center_relative_to(element=obj.hitbox, relative_to=self.__borders, mode=self.__direction)
             # проверяем, вышло ли за стенку
-            if obj.hitbox[amendment] + obj.hitbox[amendment + 2] > self.__borders[amendment] + self.__borders[amendment + 2]\
-                    + self.__margins[amendment]:
+            if (obj.hitbox[amendment] + obj.hitbox[amendment + 2] > self.__borders[amendment] +
+                    self.__borders[amendment + 2] + self.__margins[amendment]):
                 break
             self.__count_draw_object += 1
             # увеличиваем приращение
@@ -345,12 +345,11 @@ class GroupObjectClass:
         :param event: Event
         :return: None
         """
-        i = 0
-        for obj in self.__content:
-            if i >= self.__count_draw_object:
+        for ind, obj in enumerate(self.__content, 0):
+            if ind >= self.__count_draw_object:
                 break
             obj.hover_click(event)
-            i += 1
+            ind += 1
 
     def render(self, screen: pygame.Surface) -> None:
         """
