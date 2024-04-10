@@ -257,7 +257,7 @@ class GroupObjectClass:
     @position.setter
     def position(self, position: pygame.Rect):
         if not isinstance(position, pygame.Rect):
-            raise TypeError('Invalid position type')
+            raise TypeError('')
         self.__position = position
         self.__create_block()
 
@@ -268,7 +268,7 @@ class GroupObjectClass:
     @margins.setter
     def margins(self, value):
         if not isinstance(value, tuple | list):
-            raise TypeError('Не тот тип данных')
+            raise TypeError('Margins must be a list | tuple type')
         self.__margins = value
         self.__create_block()
 
@@ -279,7 +279,7 @@ class GroupObjectClass:
     @direction.setter
     def direction(self, value):
         if not isinstance(value, str):
-            raise TypeError('Не тот тип данных')
+            raise TypeError('Direction must be a string type')
         self.__direction = value
         self.__create_block()
 
@@ -327,7 +327,7 @@ class GroupObjectClass:
                 axis = 'horizontal'
                 amendment = 1
             case _:
-                raise ValueError("Неверное направление блока")
+                raise ValueError('Direction must be horizontal or vertical')
         self.__count_draw_object = 0
         for obj in self.content:
             # Двигаем по оси.
