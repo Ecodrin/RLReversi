@@ -6,9 +6,9 @@ class TicTacToeManager:
         if not pieces_to_win:
             pieces_to_win = board.size
         self.board: Board = board
-        self.crosses: list[int] = []
-        self.noughts: list[int] = []
-        self.turn: int = 1  # 1 - cross, -1 - nought
+        self._crosses: list[int] = []
+        self._noughts: list[int] = []
+        self.turn: int = 1  # 1 - крестик, -1 - нолик
         self.pieces_to_win: int = pieces_to_win
 
     def reset_board(self):
@@ -16,20 +16,21 @@ class TicTacToeManager:
 
     def make_move(self, cell: int):
         if self.turn == 1:
-            self.crosses.append(cell)
+            self._crosses.append(cell)
         else:
-            self.noughts.append(cell)
+            self._noughts.append(cell)
         self.board.board[cell] = self.turn
         self.turn *= -1
 
     def unmake_move(self, cell: int):
         if self.turn == -1:
-            self.crosses.remove(cell)
+            self._crosses.remove(cell)
         else:
-            self.noughts.remove(cell)
+            self._noughts.remove(cell)
         self.board.board[cell] = 0
         self.turn *= -1
 
+    # Возвращает массив свободных клеточек
     def find_legal_moves(self):
         legal_moves: list[int] = []
         for i, cell in enumerate(self.board.board):
@@ -38,15 +39,16 @@ class TicTacToeManager:
 
         return legal_moves
 
+    # Возвращает 1, если игрок выиграл, 0 - никто не выиграл. Проверка только для игрока, который ходит.
     def check_win(self):
-        turn_list: list[int] = self.crosses if self.turn == -1 else self.noughts
+        turn_list: list[int] = self._crosses if self.turn == -1 else self._noughts
         for cell in turn_list:
-            finished = self.check_win_at_cell(cell)
+            finished = self._check_win_at_cell(cell)
             if finished:
                 return finished
         return 0
 
-    def check_win_at_cell(self, cell: int):
+    def _check_win_at_cell(self, cell: int):
         size: int = self.board.size
         directions = ((-1, -1), (0, -1), (1, -1),
                       (-1, 0),           (1, 0),
@@ -57,7 +59,7 @@ class TicTacToeManager:
             next_cell: int = cell
             for i in range(1, self.pieces_to_win):
 
-                if not self.check_borders(next_cell, direction):
+                if not self._check_borders(next_cell, direction):
                     break
 
                 next_cell = cell + (direction[0] + direction[1] * size) * i
@@ -70,7 +72,7 @@ class TicTacToeManager:
                 return 1
         return 0
 
-    def check_borders(self, cell: int, direction: tuple[int, int]) -> bool:
+    def _check_borders(self, cell: int, direction: tuple[int, int]) -> bool:
         x, y = cell % self.board.size, cell // self.board.size
         return 0 <= x + direction[0] < self.board.size and 0 <= y + direction[1] < self.board.size
 
@@ -79,6 +81,7 @@ class Adversary:
     def __init__(self, manager):
         self.manager = manager
 
+    # Возвращает текущую оценку позиции. Чем меньше ходов до победы - тем выше оценка.
     def search(self, depth: int, alpha=float('-infinity'), beta=float('+infinity')):
         if depth == 0:
             return 0
@@ -107,6 +110,7 @@ class Adversary:
 
         return alpha
 
+    # Возвращает лучший ход для текущего игрока.
     def search_root(self, depth):
         moves: list[int] = self.manager.find_legal_moves()
         best_eval = float('-infinity')
