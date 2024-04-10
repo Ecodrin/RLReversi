@@ -2,7 +2,7 @@ from typing import Any
 
 
 def center_relative_to(element, relative_to, mode: str = 'both',
-                       margins: tuple | list = (0, 0, 0, 0)) -> Any | None:
+                       margins: tuple | list = (0, 0, 0, 0)) -> Any:
     """
     -----------
     |<x,y>    |
@@ -25,10 +25,10 @@ def center_relative_to(element, relative_to, mode: str = 'both',
         case 'both':
             element[0] = coordinate_center_element[0] - element[2] // 2
             element[1] = coordinate_center_element[1] - element[3] // 2
-        case 'vertically':
-            element[0] = coordinate_center_element[0] - element[2] // 2
-        case 'horizontally':
+        case 'vertical':
             element[1] = coordinate_center_element[1] - element[3] // 2
+        case 'horizontal':
+            element[0] = coordinate_center_element[0] - element[2] // 2
         case _:
             raise ValueError('Invalid mode')
 

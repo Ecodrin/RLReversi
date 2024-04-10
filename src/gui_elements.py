@@ -232,33 +232,37 @@ class Button(Clickable):
 
 
 class GroupObjectClass:
-    def __init__(self, content: list[Any],
-                 borders: pygame.Rect,
-                 direction: str = 'horizontally',
-                 margins: tuple[int, int] = (0, 0)) -> None:
+    def __init__(self, content: list[Any] | tuple[Any],
+                 position: pygame.Rect,
+                 direction: str = 'horizontal',
+                 margin: tuple[int, int] | list[int, int] = (0, 0)) -> None:
         """
-        Class for draw objects in the box
-        :param content: List of objects(ex. button or text)
-        :param borders: borders of block and its position
-        :param direction: vertically/horizontally
-        :param margins: margin: int  of pixels between elements.
+        Класс для отрисовки группы объектов в ряд с заданными отступами.
+        :param content: Объекты
+        :param position: Позиция блока
+        :param direction: vertical/horizontal
+        :param margin: Количество пикселей между объектами
         """
-        self.__content: list[Any] = content
-        self.__borders: pygame.Rect = borders
+        self.__content: list[Any] | tuple[Any] = content
+        self.__position: pygame.Rect = position
         self.__direction: str = direction
-        self.__margins: tuple[int, int] = margins
+        self.__margin: tuple[int, int] | list[int, int] = margin
         self.__count_draw_object: int = 0
         self.__create_block()
 
     @property
-    def margins(self):
-        return self.__margins
+    def count_draw_object(self) -> int:
+        return self.__count_draw_object
 
-    @margins.setter
-    def margins(self, value):
-        if isinstance(value, tuple) == 0:
+    @property
+    def margin(self):
+        return self.__margin
+
+    @margin.setter
+    def margin(self, value):
+        if not isinstance(value, tuple | list):
             raise TypeError('Не тот тип данных')
-        self.__margins = value
+        self.__margin = value
         self.__create_block()
 
     @property
@@ -267,94 +271,83 @@ class GroupObjectClass:
 
     @direction.setter
     def direction(self, value):
-        if isinstance(value, str) == 0:
+        if not isinstance(value, str):
             raise TypeError('Не тот тип данных')
         self.__direction = value
         self.__create_block()
 
-    @staticmethod
-    def __update_block(func: Callable) -> Callable:
-        """
-        Decorator for updating block
-        Decorator causes __create_block in the end every function.
-        :param func: function to be decorated
-        :return: Callable
-        """
-        def wrapper(self, *args, **kwargs) -> Any:
-            res = func(self, *args, **kwargs)
-            self.__create_block()
-            return res
-        return wrapper
-
-    @__update_block
     def insert(self, pos: int, obj: Any) -> None:
         """
-        Insert object at given position
-        :param pos: index of object in the list
-        :param obj: object to be inserted
+        Вставка объекта в блок
+        :param pos: его позиция в блоке
+        :param obj: объект
         :return: None
         """
         self.__content.insert(pos, obj)
+        self.__create_block()
 
-    @__update_block
     def append(self, obj) -> None:
         """
         Append object to the list
         :param obj:
-        self.__create_block()
         :return:
         """
         self.__content.append(obj)
+        self.__create_block()
 
-    @__update_block
     def pop(self, pos: int) -> object:
         """
-        Pop object from the list
+        Удаление объекта из
         :param pos: index
         :return: object
         """
         obj = self.__content.pop(pos)
+        self.__create_block()
         return obj
 
     def __create_block(self) -> None:
-        if self.__direction == 'horizontally':
-            margins_amendment = [self.__margins[0] + self.__borders[0], 0]
-            # if horizontally
-            amendment = 0
-        else:
-            margins_amendment = [0, self.__margins[1] + self.__borders[1]]
-            # if vertically
-            amendment = 1
+        match self.__direction:
+            case 'horizontal':
+                margin_amendment = self.__position[0] + self.__position[0]
+                # if horizontally
+                axis = 'vertical'
+                amendment = 0
+            case 'vertical':
+                margin_amendment = self.__position[1] + self.__margin[1]
+                # if vertically
+                axis = 'horizontal'
+                amendment = 1
+            case _:
+                raise ValueError("Неверное направление блока")
         self.__count_draw_object = 0
         for obj in self.__content:
             # двигаем подвижную координату
-            obj.hitbox[amendment] = margins_amendment[amendment]
-            # центруем по заданной оси
-            obj.hitbox = center_relative_to(element=obj.hitbox, relative_to=self.__borders, mode=self.__direction)
+            obj.hitbox[amendment] = margin_amendment
+            # Центрируем по заданной оси
+            obj.hitbox = center_relative_to(element=obj.hitbox, relative_to=self.__position, mode=axis)
             # проверяем, вышло ли за стенку
-            if (obj.hitbox[amendment] + obj.hitbox[amendment + 2] > self.__borders[amendment] +
-                    self.__borders[amendment + 2] + self.__margins[amendment]):
+            if (obj.hitbox[amendment] + obj.hitbox[amendment + 2] > self.__position[amendment] +
+                    self.__position[amendment + 2] + self.__margin[amendment]):
                 break
             self.__count_draw_object += 1
             # увеличиваем приращение
-            margins_amendment[amendment] += self.__margins[amendment] + obj.hitbox[amendment + 2]
+            margin_amendment += self.__margin[amendment] + obj.hitbox[amendment + 2]
 
     def hover_click(self, event: pygame.event.Event) -> None:
         """
-        Hover click event for all objects in the box
-        :param event: Event
+        Hover click event
+        :param event: event
         :return: None
         """
         for ind, obj in enumerate(self.__content, 0):
             if ind >= self.__count_draw_object:
                 break
             obj.hover_click(event)
-            ind += 1
 
     def render(self, screen: pygame.Surface) -> None:
         """
-        Draw all objects in the box
-        :param screen:Object Display
+        Отрисовка всех объектов
+        :param Дисплей
         :return:None
         """
         i = 0
@@ -364,9 +357,103 @@ class GroupObjectClass:
             obj.render(screen)
             i += 1
 
-    def __str__(self) -> str:
-        return f'GroupObjectClass: objects: \n{list(self.__content)}\n Borders{self.__borders}'
-
     def __repr__(self) -> str:
         return (f'GroupObjectClass: {list(map(lambda x: repr(x), self.__content))}\n'
-                f'Borders: {self.__borders}\ndirection: {self.__direction}\nmargins: {self.__margins}\n')
+                f'position: {self.__position}\ndirection: {self.__direction}\nmargins: {self.__margin}\n')
+
+    def __str__(self) -> str:
+        return f'GroupObjectClass: objects: \n{list(self.__content)}\n position{self.__position}'
+
+
+from gui_utility import center_relative_to
+from pygame.locals import Color, Rect
+import time
+
+pygame.init()
+screen = pygame.display.set_mode((1000, 700))
+clock = pygame.time.Clock()
+
+text_content = "Hello, Ivan Iva"
+text_position = Rect(100, 100, 200, 200)
+text_colour = pygame.color.Color(0, 0, 0)
+font_family = "arial"
+font_size = 24
+font_style = 0
+borders = text_position
+stylized_text = StylizedText(
+    content=text_content,
+    position=text_position,
+    text_colour=text_colour,
+    font_family=font_family,
+    font_size=font_size,
+    font_style=font_style,
+)
+
+button1 = Button(onClick=lambda x: x + 1, hitbox=borders,
+                 inner_text=stylized_text,
+                 default_texture=pygame.color.Color(255, 0, 0),
+                 hover_texture=pygame.color.Color(0, 255, 0),
+                 click_texture=pygame.color.Color(0, 0, 255))
+
+
+text_content = "Hello, ZEk ZEk asddfsadasdasad"
+text_position = Rect(400, 400, 200, 200)
+text_colour = pygame.color.Color(0, 0, 0)
+font_family = "arial"
+font_size = 24
+font_style = 0
+borders = text_position
+stylized_text = StylizedText(
+    content=text_content,
+    position=text_position,
+    text_colour=text_colour,
+    font_family=font_family,
+    font_size=font_size,
+    font_style=font_style,
+)
+
+button2 = Button(onClick=lambda x: x + 1, hitbox=borders,
+                 inner_text=stylized_text,
+                 default_texture=pygame.color.Color(255, 0, 0),
+                 hover_texture=pygame.color.Color(0, 255, 0),
+                 click_texture=pygame.color.Color(0, 0, 255), border_radius=20)
+
+
+text_content = "Hello, Piddrtrrr"
+text_position = Rect(400, 400, 200, 200)
+text_colour = pygame.color.Color(0, 0, 0)
+font_family = "arial"
+font_size = 24
+font_style = 0
+borders = text_position
+stylized_text = StylizedText(
+    content=text_content,
+    position=text_position,
+    text_colour=text_colour,
+    font_family=font_family,
+    font_size=font_size,
+    font_style=font_style,
+)
+
+button3 = Button(onClick=lambda x: x + 1, hitbox=borders,
+                 inner_text=stylized_text,
+                 default_texture=pygame.color.Color(255, 0, 0),
+                 hover_texture=pygame.color.Color(0, 255, 0),
+                 click_texture=pygame.color.Color(0, 0, 255))
+
+screen.fill((255, 255, 255))
+running = True
+
+a = GroupObjectClass([button1, button2, button3], Rect(100, 100, 800, 500), direction="vertical", margin=(20, 20))
+pygame.draw.rect(screen, (0, 0, 0), Rect(100, 100, 800, 500), 1)
+while running:
+    for event in pygame.event.get():
+        a.hover_click(event)
+        a.render(screen)
+        #########
+        pygame.display.flip()
+        if event.type == pygame.QUIT:
+            running = False
+
+    pygame.time.Clock().tick()
+pygame.quit()
