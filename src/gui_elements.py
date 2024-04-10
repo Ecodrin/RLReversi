@@ -241,9 +241,9 @@ class GroupObjectClass:
         :param content: Объекты
         :param position: Позиция блока
         :param direction: vertical/horizontal
-        :param margin: Количество пикселей между объектами
+        :param margins: Количество пикселей между объектами
         """
-        self.__content: list[Any] | tuple[Any] = content
+        self.content: list[Any] | tuple[Any] = content
         self.__position: pygame.Rect = position
         self.__direction: str = direction
         self.__margins: tuple[int, int] | list[int, int] = margins
@@ -251,12 +251,19 @@ class GroupObjectClass:
         self.__create_block()
 
     @property
-    def count_draw_object(self) -> int:
-        return self.__count_draw_object
+    def position(self) -> pygame.Rect:
+        return self.__position
+
+    @position.setter
+    def position(self, position: pygame.Rect):
+        if not isinstance(position, pygame.Rect):
+            raise TypeError('Invalid position type')
+        self.__position = position
+        self.__create_block()
 
     @property
     def margins(self):
-        return self.__margin
+        return self.__margins
 
     @margins.setter
     def margins(self, value):
@@ -276,14 +283,14 @@ class GroupObjectClass:
         self.__direction = value
         self.__create_block()
 
-    def insert(self, pos: int, obj: Any) -> None:
+    def insert(self, position: int, obj: Any) -> None:
         """
         Вставка объекта в блок
-        :param pos: его позиция в блоке
+        :param position: его позиция в блоке
         :param obj: объект
         :return: None
         """
-        self.__content.insert(pos, obj)
+        self.content.insert(position, obj)
         self.__create_block()
 
     def append(self, obj) -> None:
@@ -292,16 +299,16 @@ class GroupObjectClass:
         :param obj:
         :return:
         """
-        self.__content.append(obj)
+        self.content.append(obj)
         self.__create_block()
 
     def pop(self, pos: int) -> object:
         """
         Удаление объекта из блока.
-        :param pos: index
-        :return: object
+        :param pos: индекс
+        :return: объект
         """
-        obj = self.__content.pop(pos)
+        obj = self.content.pop(pos)
         self.__create_block()
         return obj
 
@@ -312,28 +319,28 @@ class GroupObjectClass:
         """
         match self.__direction:
             case 'horizontal':
-                margins_amendment = self.__position[0] + self.__margins[0]
+                shift = self.__position[0] + self.__margins[0]
                 axis = 'vertical'
                 amendment = 0
             case 'vertical':
-                margins_amendment = self.__position[1] + self.__margins[1]
+                shift = self.__position[1] + self.__margins[1]
                 axis = 'horizontal'
                 amendment = 1
             case _:
                 raise ValueError("Неверное направление блока")
         self.__count_draw_object = 0
-        for obj in self.__content:
-            # двигаем подвижную координату
-            obj.hitbox[amendment] = margins_amendment
-            # Центрируем по заданной оси
+        for obj in self.content:
+            # Двигаем по оси.
+            obj.hitbox[amendment] = shift
+            # Центрируем по противоположной оси.
             obj.hitbox = center_relative_to(element=obj.hitbox, relative_to=self.__position, mode=axis)
-            # проверяем, вышло ли за стенку (длина объекта + координата его левого угла >= границы блока)
+            # Проверяем, вышло ли за границу (длина объекта + координата его левого угла >= границы блока).
             if (obj.hitbox[amendment] + obj.hitbox[amendment + 2] > self.__position[amendment] +
                     self.__position[amendment + 2] + self.__margins[amendment]):
                 break
             self.__count_draw_object += 1
-            # увеличиваем приращение
-            margins_amendment += self.__margins[amendment] + obj.hitbox[amendment + 2]
+            # Увеличиваем приращение.
+            shift += self.__margins[amendment] + obj.hitbox[amendment + 2]
 
     def hover_click(self, event: pygame.event.Event) -> None:
         """
@@ -341,8 +348,8 @@ class GroupObjectClass:
         :param event: момент
         :return: None
         """
-        for ind, obj in enumerate(self.__content, 0):
-            if ind >= self.__count_draw_object:
+        for index, obj in enumerate(self.content, 0):
+            if index >= self.__count_draw_object:
                 break
             obj.hover_click(event)
 
@@ -352,14 +359,14 @@ class GroupObjectClass:
         :param Дисплей
         :return:None
         """
-        for ind, obj in enumerate(self.__content, 0):
+        for ind, obj in enumerate(self.content, 0):
             if ind >= self.__count_draw_object:
                 break
             obj.render(screen)
 
     def __repr__(self) -> str:
-        return (f'GroupObjectClass: {list(map(lambda x: repr(x), self.__content))}\n'
-                f'position: {self.__position}\ndirection: {self.__direction}\nmargins: {self.__margin}\n')
+        return (f'GroupObjectClass: {list(map(lambda x: repr(x), self.content))}\n'
+                f'position: {self.__position}\ndirection: {self.__direction}\nmargins: {self.__margins}\n')
 
     def __str__(self) -> str:
-        return f'GroupObjectClass: objects: \n{list(self.__content)}\n position{self.__position}'
+        return f'GroupObjectClass: objects: \n{list(self.content)}\n position{self.__position}'
