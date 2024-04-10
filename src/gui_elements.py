@@ -235,7 +235,7 @@ class GroupObjectClass:
     def __init__(self, content: list[Any] | tuple[Any],
                  position: pygame.Rect,
                  direction: str = 'horizontal',
-                 margin: tuple[int, int] | list[int, int] = (0, 0)) -> None:
+                 margins: tuple[int, int] | list[int, int] = (0, 0)) -> None:
         """
         Класс для отрисовки группы объектов в ряд с заданными отступами.
         :param content: Объекты
@@ -246,7 +246,7 @@ class GroupObjectClass:
         self.__content: list[Any] | tuple[Any] = content
         self.__position: pygame.Rect = position
         self.__direction: str = direction
-        self.__margin: tuple[int, int] | list[int, int] = margin
+        self.__margins: tuple[int, int] | list[int, int] = margins
         self.__count_draw_object: int = 0
         self.__create_block()
 
@@ -255,14 +255,14 @@ class GroupObjectClass:
         return self.__count_draw_object
 
     @property
-    def margin(self):
+    def margins(self):
         return self.__margin
 
-    @margin.setter
-    def margin(self, value):
+    @margins.setter
+    def margins(self, value):
         if not isinstance(value, tuple | list):
             raise TypeError('Не тот тип данных')
-        self.__margin = value
+        self.__margins = value
         self.__create_block()
 
     @property
@@ -288,7 +288,7 @@ class GroupObjectClass:
 
     def append(self, obj) -> None:
         """
-        Append object to the list
+        Добавить объект в блок.
         :param obj:
         :return:
         """
@@ -297,7 +297,7 @@ class GroupObjectClass:
 
     def pop(self, pos: int) -> object:
         """
-        Удаление объекта из
+        Удаление объекта из блока.
         :param pos: index
         :return: object
         """
@@ -306,15 +306,17 @@ class GroupObjectClass:
         return obj
 
     def __create_block(self) -> None:
+        """
+        Создаем и фиксируем координаты объектов блока.
+        :return:
+        """
         match self.__direction:
             case 'horizontal':
-                margin_amendment = self.__position[0] + self.__position[0]
-                # if horizontally
+                margins_amendment = self.__position[0] + self.__margins[0]
                 axis = 'vertical'
                 amendment = 0
             case 'vertical':
-                margin_amendment = self.__position[1] + self.__margin[1]
-                # if vertically
+                margins_amendment = self.__position[1] + self.__margins[1]
                 axis = 'horizontal'
                 amendment = 1
             case _:
@@ -322,21 +324,21 @@ class GroupObjectClass:
         self.__count_draw_object = 0
         for obj in self.__content:
             # двигаем подвижную координату
-            obj.hitbox[amendment] = margin_amendment
+            obj.hitbox[amendment] = margins_amendment
             # Центрируем по заданной оси
             obj.hitbox = center_relative_to(element=obj.hitbox, relative_to=self.__position, mode=axis)
-            # проверяем, вышло ли за стенку
+            # проверяем, вышло ли за стенку (длина объекта + координата его левого угла >= границы блока)
             if (obj.hitbox[amendment] + obj.hitbox[amendment + 2] > self.__position[amendment] +
-                    self.__position[amendment + 2] + self.__margin[amendment]):
+                    self.__position[amendment + 2] + self.__margins[amendment]):
                 break
             self.__count_draw_object += 1
             # увеличиваем приращение
-            margin_amendment += self.__margin[amendment] + obj.hitbox[amendment + 2]
+            margins_amendment += self.__margins[amendment] + obj.hitbox[amendment + 2]
 
     def hover_click(self, event: pygame.event.Event) -> None:
         """
-        Hover click event
-        :param event: event
+        Клик момент
+        :param event: момент
         :return: None
         """
         for ind, obj in enumerate(self.__content, 0):
@@ -350,12 +352,10 @@ class GroupObjectClass:
         :param Дисплей
         :return:None
         """
-        i = 0
-        for obj in self.__content:
-            if i >= self.__count_draw_object:
+        for ind, obj in enumerate(self.__content, 0):
+            if ind >= self.__count_draw_object:
                 break
             obj.render(screen)
-            i += 1
 
     def __repr__(self) -> str:
         return (f'GroupObjectClass: {list(map(lambda x: repr(x), self.__content))}\n'
