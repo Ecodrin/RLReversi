@@ -257,7 +257,7 @@ class GroupObjectClass:
     @position.setter
     def position(self, position: pygame.Rect):
         if not isinstance(position, pygame.Rect):
-            raise TypeError('')
+            raise TypeError('position must be pygame.Rect')
         self.__position = position
         self.__create_block()
 
@@ -268,7 +268,7 @@ class GroupObjectClass:
     @margins.setter
     def margins(self, value):
         if not isinstance(value, tuple | list):
-            raise TypeError('Margins must be a list | tuple type')
+            raise TypeError('Margins must be a list or tuple type')
         self.__margins = value
         self.__create_block()
 
@@ -283,34 +283,34 @@ class GroupObjectClass:
         self.__direction = value
         self.__create_block()
 
-    def insert(self, position: int, obj: Any) -> None:
+    def insert(self, position: int, item: Any) -> None:
         """
         Вставка объекта в блок
         :param position: его позиция в блоке
-        :param obj: объект
+        :param item: объект
         :return: None
         """
-        self.content.insert(position, obj)
+        self.content.insert(position, item)
         self.__create_block()
 
-    def append(self, obj) -> None:
+    def append(self, item) -> None:
         """
         Добавить объект в блок.
-        :param obj:
+        :param item:
         :return:
         """
-        self.content.append(obj)
+        self.content.append(item)
         self.__create_block()
 
-    def pop(self, pos: int) -> object:
+    def pop(self, position: int) -> object:
         """
         Удаление объекта из блока.
-        :param pos: индекс
+        :param position: индекс
         :return: объект
         """
-        obj = self.content.pop(pos)
+        item = self.content.pop(position)
         self.__create_block()
-        return obj
+        return item
 
     def __create_block(self) -> None:
         """
@@ -319,39 +319,42 @@ class GroupObjectClass:
         """
         match self.__direction:
             case 'horizontal':
+                # задаем начальный угол для координаты подвижной по Оси(то есть граница + заданное смещение).
                 shift = self.__position[0] + self.__margins[0]
                 axis = 'vertical'
-                amendment = 0
+                shift_index = 0
             case 'vertical':
+                # задаем начальный угол для координаты подвижной по Оси(то есть граница + заданное смещение).
                 shift = self.__position[1] + self.__margins[1]
                 axis = 'horizontal'
-                amendment = 1
+                shift_index = 1
             case _:
                 raise ValueError('Direction must be horizontal or vertical')
         self.__count_draw_object = 0
-        for obj in self.content:
-            # Двигаем по оси.
-            obj.hitbox[amendment] = shift
-            # Центрируем по противоположной оси.
-            obj.hitbox = center_relative_to(element=obj.hitbox, relative_to=self.__position, mode=axis)
+        for item in self.content:
+            # Двигаем объект(из блока) по оси.
+            item.hitbox[shift_index] = shift
+            # Центрируем объект по противоположной оси.
+            item.hitbox = center_relative_to(element=item.hitbox, relative_to=self.__position, mode=axis)
             # Проверяем, вышло ли за границу (длина объекта + координата его левого угла >= границы блока).
-            if (obj.hitbox[amendment] + obj.hitbox[amendment + 2] > self.__position[amendment] +
-                    self.__position[amendment + 2] + self.__margins[amendment]):
+            # Чтобы получить длину Rect, надо к shift_index прибавить 2.
+            if (item.hitbox[shift_index] + item.hitbox[shift_index + 2] >= self.__position[shift_index] +
+                    self.__position[shift_index + 2] + self.__margins[shift_index]):
                 break
             self.__count_draw_object += 1
-            # Увеличиваем приращение.
-            shift += self.__margins[amendment] + obj.hitbox[amendment + 2]
+            # Увеличиваем приращение. Двигаем левый угол для следующего блока(возможного) Ox: Длина + левый верхний.
+            shift += self.__margins[shift_index] + item.hitbox[shift_index + 2]
 
     def hover_click(self, event: pygame.event.Event) -> None:
         """
-        Клик момент
-        :param event: момент
+        Проверка состояния всех объектов в блоке.
+        :param event: Момент клика(Bruh moment from dmitriy_senior_pomidorovich).
         :return: None
         """
-        for index, obj in enumerate(self.content, 0):
+        for index, item in enumerate(self.content):
             if index >= self.__count_draw_object:
                 break
-            obj.hover_click(event)
+            item.hover_click(event)
 
     def render(self, screen: pygame.Surface) -> None:
         """
@@ -359,10 +362,10 @@ class GroupObjectClass:
         :param Дисплей
         :return:None
         """
-        for ind, obj in enumerate(self.content, 0):
-            if ind >= self.__count_draw_object:
+        for index, item in enumerate(self.content):
+            if index >= self.__count_draw_object:
                 break
-            obj.render(screen)
+            item.render(screen)
 
     def __repr__(self) -> str:
         return (f'GroupObjectClass: {list(map(lambda x: repr(x), self.content))}\n'
