@@ -257,7 +257,7 @@ class GroupObjectClass:
     @position.setter
     def position(self, position: pygame.Rect):
         if not isinstance(position, pygame.Rect):
-            raise TypeError('position must be pygame.Rect')
+            raise TypeError('Position must be pygame.Rect')
         self.__position = position
         self.__create_block()
 
@@ -283,20 +283,20 @@ class GroupObjectClass:
         self.__direction = value
         self.__create_block()
 
-    def insert(self, position: int, item: Any) -> None:
+    def insert(self, index: int, item: Any) -> None:
         """
         Вставка объекта в блок
-        :param position: его позиция в блоке
-        :param item: объект
+        :param index: Позиция объекта в блоке
+        :param item: Объект для вставки в блок.
         :return: None
         """
-        self.content.insert(position, item)
+        self.content.insert(index, item)
         self.__create_block()
 
     def append(self, item) -> None:
         """
-        Добавить объект в блок.
-        :param item:
+        Добавление объекта в блок.
+        :param item: Объект для вставки в блок.
         :return:
         """
         self.content.append(item)
@@ -305,7 +305,7 @@ class GroupObjectClass:
     def pop(self, position: int) -> object:
         """
         Удаление объекта из блока.
-        :param position: индекс
+        :param position: Индекс элементы.
         :return: объект
         """
         item = self.content.pop(position)
@@ -315,6 +315,7 @@ class GroupObjectClass:
     def __create_block(self) -> None:
         """
         Создаем и фиксируем координаты объектов блока.
+        Проходим каждый объект располагаем его относительно блока(измения внутренние координаты объекта).
         :return:
         """
         match self.__direction:
@@ -347,8 +348,9 @@ class GroupObjectClass:
 
     def hover_click(self, event: pygame.event.Event) -> None:
         """
-        Проверка состояния всех объектов в блоке.
-        :param event: Момент клика(Bruh moment from dmitriy_senior_pomidorovich).
+        Функция перебирает все объекты и проверяет их состояние в pygame.event.Event. Если функция находит какое-либо
+        совпадение, то вызывается внутрения функция объекта.
+        :param event: pygame.event (Bruh moment from dmitriy_senior_pomidorovich).
         :return: None
         """
         for index, item in enumerate(self.content):
@@ -358,8 +360,8 @@ class GroupObjectClass:
 
     def render(self, screen: pygame.Surface) -> None:
         """
-        Отрисовка всех объектов
-        :param Дисплей
+        Отрисовка всех объектов.
+        :param screen: Дисплей.
         :return:None
         """
         for index, item in enumerate(self.content):
