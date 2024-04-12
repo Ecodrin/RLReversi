@@ -257,7 +257,7 @@ class GroupObjectClass:
     @position.setter
     def position(self, position: pygame.Rect):
         if not isinstance(position, pygame.Rect):
-            raise TypeError('Position must be pygame.Rect')
+            raise TypeError('Position must be pygame.Rect.')
         self.__position = position
         self.__create_block()
 
@@ -268,7 +268,7 @@ class GroupObjectClass:
     @margins.setter
     def margins(self, value):
         if not isinstance(value, tuple | list):
-            raise TypeError('Margins must be a list or tuple type')
+            raise TypeError('Margins must be a list or tuple type.')
         self.__margins = value
         self.__create_block()
 
@@ -279,13 +279,13 @@ class GroupObjectClass:
     @direction.setter
     def direction(self, value):
         if not isinstance(value, str):
-            raise TypeError('Direction must be a string type')
+            raise TypeError('Direction must be a string type.')
         self.__direction = value
         self.__create_block()
 
     def insert(self, index: int, item: Any) -> None:
         """
-        Вставка объекта в блок
+        Вставка объекта в блок.
         :param index: Позиция объекта в блоке
         :param item: Объект для вставки в блок.
         :return: None
@@ -306,7 +306,7 @@ class GroupObjectClass:
         """
         Удаление объекта из блока.
         :param position: Индекс элементы.
-        :return: объект
+        :return: объект.
         """
         item = self.content.pop(position)
         self.__create_block()
@@ -315,22 +315,23 @@ class GroupObjectClass:
     def __create_block(self) -> None:
         """
         Создаем и фиксируем координаты объектов блока.
-        Проходим каждый объект располагаем его относительно блока(измения внутренние координаты объекта).
+        Проходим каждый объект, располагаем его в блоке.
+        Изменяются внутренние координаты объекта.
         :return:
         """
         match self.__direction:
             case 'horizontal':
-                # задаем начальный угол для координаты подвижной по Оси(то есть граница + заданное смещение).
+                # Задаем начальный угол для координаты подвижной по Оси(то есть граница + заданное смещение).
                 shift = self.__position[0] + self.__margins[0]
                 axis = 'vertical'
                 shift_index = 0
             case 'vertical':
-                # задаем начальный угол для координаты подвижной по Оси(то есть граница + заданное смещение).
+                # Задаем начальный угол для координаты подвижной по Оси(то есть граница + заданное смещение).
                 shift = self.__position[1] + self.__margins[1]
                 axis = 'horizontal'
                 shift_index = 1
             case _:
-                raise ValueError('Direction must be horizontal or vertical')
+                raise ValueError('Direction must be horizontal or vertical.')
         self.__count_draw_object = 0
         for item in self.content:
             # Двигаем объект(из блока) по оси.
@@ -349,7 +350,7 @@ class GroupObjectClass:
     def hover_click(self, event: pygame.event.Event) -> None:
         """
         Функция перебирает все объекты и проверяет их состояние в pygame.event.Event. Если функция находит какое-либо
-        совпадение, то вызывается внутрения функция объекта.
+        совпадение, то вызывается внутреняя функция объекта.
         :param event: pygame.event (Bruh moment from dmitriy_senior_pomidorovich).
         :return: None
         """
