@@ -2,7 +2,7 @@ import os
 
 import pygame
 
-from typing import Callable
+from typing import Callable, Any
 
 from gui_utility import center_relative_to
 from cell import Clickable
@@ -229,3 +229,150 @@ class Button(Clickable):
 
     def __str__(self):
         return f"Button with text '{self.inner_text}' and hitbox {self.hitbox}"
+
+
+class GroupObjectClass:
+    def __init__(self, content: list[Any] | tuple[Any],
+                 position: pygame.Rect,
+                 direction: str = 'horizontal',
+                 margins: tuple[int, int] | list[int, int] = (0, 0)) -> None:
+        """
+        Класс для отрисовки группы объектов в ряд с заданными отступами.
+        :param content: Объекты
+        :param position: Позиция блока
+        :param direction: vertical/horizontal
+        :param margins: Количество пикселей между объектами
+        """
+        self.content: list[Any] | tuple[Any] = content
+        self.__position: pygame.Rect = position
+        self.__direction: str = direction
+        self.__margins: tuple[int, int] | list[int, int] = margins
+        self.__count_draw_object: int = 0
+        self.__create_block()
+
+    @property
+    def position(self) -> pygame.Rect:
+        return self.__position
+
+    @position.setter
+    def position(self, position: pygame.Rect):
+        if not isinstance(position, pygame.Rect):
+            raise TypeError('Position must be pygame.Rect.')
+        self.__position = position
+        self.__create_block()
+
+    @property
+    def margins(self):
+        return self.__margins
+
+    @margins.setter
+    def margins(self, value):
+        if not isinstance(value, tuple | list):
+            raise TypeError('Margins must be a list or tuple type.')
+        self.__margins = value
+        self.__create_block()
+
+    @property
+    def direction(self):
+        return self.__direction
+
+    @direction.setter
+    def direction(self, value):
+        if not isinstance(value, str):
+            raise TypeError('Direction must be a string type.')
+        self.__direction = value
+        self.__create_block()
+
+    def insert(self, index: int, item: Any) -> None:
+        """
+        Вставка объекта в блок.
+        :param index: Позиция объекта в блоке
+        :param item: Объект для вставки в блок.
+        :return: None
+        """
+        self.content.insert(index, item)
+        self.__create_block()
+
+    def append(self, item) -> None:
+        """
+        Добавление объекта в блок.
+        :param item: Объект для вставки в блок.
+        :return:
+        """
+        self.content.append(item)
+        self.__create_block()
+
+    def pop(self, position: int) -> object:
+        """
+        Удаление объекта из блока.
+        :param position: Индекс элементы.
+        :return: объект.
+        """
+        item = self.content.pop(position)
+        self.__create_block()
+        return item
+
+    def __create_block(self) -> None:
+        """
+        Создаем и фиксируем координаты объектов блока.
+        Проходим каждый объект, располагаем его в блоке.
+        Изменяются внутренние координаты объекта.
+        :return:
+        """
+        match self.__direction:
+            case 'horizontal':
+                # Задаем начальный угол для координаты подвижной по Оси(то есть граница + заданное смещение).
+                shift = self.__position[0] + self.__margins[0]
+                axis = 'vertical'
+                shift_index = 0
+            case 'vertical':
+                # Задаем начальный угол для координаты подвижной по Оси(то есть граница + заданное смещение).
+                shift = self.__position[1] + self.__margins[1]
+                axis = 'horizontal'
+                shift_index = 1
+            case _:
+                raise ValueError('Direction must be horizontal or vertical.')
+        self.__count_draw_object = 0
+        for item in self.content:
+            # Двигаем объект(из блока) по оси.
+            item.hitbox[shift_index] = shift
+            # Центрируем объект по противоположной оси.
+            item.hitbox = center_relative_to(element=item.hitbox, relative_to=self.__position, mode=axis)
+            # Проверяем, вышло ли за границу (длина объекта + координата его левого угла >= границы блока).
+            # Чтобы получить длину Rect, надо к shift_index прибавить 2.
+            if (item.hitbox[shift_index] + item.hitbox[shift_index + 2] >= self.__position[shift_index] +
+                    self.__position[shift_index + 2] + self.__margins[shift_index]):
+                break
+            self.__count_draw_object += 1
+            # Увеличиваем приращение. Двигаем левый угол для следующего блока(возможного) Ox: Длина + левый верхний.
+            shift += self.__margins[shift_index] + item.hitbox[shift_index + 2]
+
+    def hover_click(self, event: pygame.event.Event) -> None:
+        """
+        Функция перебирает все объекты и проверяет их состояние в pygame.event.Event. Если функция находит какое-либо
+        совпадение, то вызывается внутреняя функция объекта.
+        :param event: pygame.event (Bruh moment from dmitriy_senior_pomidorovich).
+        :return: None
+        """
+        for index, item in enumerate(self.content):
+            if index >= self.__count_draw_object:
+                break
+            item.hover_click(event)
+
+    def render(self, screen: pygame.Surface) -> None:
+        """
+        Отрисовка всех объектов.
+        :param screen: Дисплей.
+        :return:None
+        """
+        for index, item in enumerate(self.content):
+            if index >= self.__count_draw_object:
+                break
+            item.render(screen)
+
+    def __repr__(self) -> str:
+        return (f'GroupObjectClass: {list(map(lambda x: repr(x), self.content))}\n'
+                f'position: {self.__position}\ndirection: {self.__direction}\nmargins: {self.__margins}\n')
+
+    def __str__(self) -> str:
+        return f'GroupObjectClass: objects: \n{list(self.content)}\n position{self.__position}'
