@@ -48,6 +48,15 @@ class TicTacToeManager:
                 return finished
         return 0
 
+    # Возвращает 1, если выиграли белые, -1 - черные, 0 - ничья, None - игра еще не закончилась.
+    def is_game_ended(self):
+        win = self.check_win()
+        if win:
+            if not self.find_legal_moves():
+                return 0
+            return -win * self.turn
+        return None
+
     def _check_win_at_cell(self, cell: int):
         size: int = self.board.size
         directions = ((-1, -1), (0, -1), (1, -1),
