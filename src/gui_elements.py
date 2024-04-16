@@ -5,7 +5,7 @@ import pygame
 from typing import Callable, Any
 
 from gui_utility import center_relative_to
-from cell import Clickable
+from board import Clickable
 
 
 class StylizedText:
