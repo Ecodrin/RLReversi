@@ -1,5 +1,5 @@
-from board import Board
-from manager import GameManager
+from src.board import Board
+from src.manager import GameManager
 
 
 class TicTacToeManager(GameManager):
@@ -40,23 +40,23 @@ class TicTacToeManager(GameManager):
 
         return legal_moves
 
-    # Возвращает 1, если игрок выиграл, 0 - никто не выиграл. Проверка только для игрока, который ходит.
+    # Возвращает 1, если выиграли белые, -1 - черные, 0 - ничья.
     def check_win(self):
+        win = self._check_win_for_current_player()
+        if win:
+            if not self.find_legal_moves():
+                return 0
+            return -win * self.turn
+        return 0
+
+    # Возвращает 1, если игрок выиграл, 0 - никто не выиграл. Проверка только для игрока, который ходит.
+    def _check_win_for_current_player(self):
         turn_list: list[int] = self._crosses if self.turn == -1 else self._noughts
         for cell in turn_list:
             finished = self._check_win_at_cell(cell)
             if finished:
                 return finished
         return 0
-
-    # Возвращает 1, если выиграли белые, -1 - черные, 0 - ничья, None - игра еще не закончилась.
-    def has_game_ended(self):
-        win = self.check_win()
-        if win:
-            if not self.find_legal_moves():
-                return 0
-            return -win * self.turn
-        return None
 
     def _check_win_at_cell(self, cell: int):
         size: int = self.board.size
