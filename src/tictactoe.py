@@ -1,7 +1,35 @@
+from abc import ABC, abstractmethod
+
 from board import Board
 
 
-class TicTacToeManager:
+class GameManager(ABC):
+    @abstractmethod
+    def __init__(self, board: Board) -> None:
+        self.board: Board = board
+
+    @abstractmethod
+    def reset_board(self) -> None:
+        pass
+
+    @abstractmethod
+    def make_move(self, move) -> None:
+        pass
+
+    @abstractmethod
+    def unmake_move(self, move) -> None:
+        pass
+
+    @abstractmethod
+    def find_legal_moves(self) -> list:
+        pass
+
+    @abstractmethod
+    def check_win(self) -> int:
+        pass
+
+
+class TicTacToeManager(GameManager):
     def __init__(self, board: Board = Board(3), pieces_to_win: int = None):
         if not pieces_to_win:
             pieces_to_win = board.size
@@ -49,7 +77,7 @@ class TicTacToeManager:
         return 0
 
     # Возвращает 1, если выиграли белые, -1 - черные, 0 - ничья, None - игра еще не закончилась.
-    def is_game_ended(self):
+    def has_game_ended(self):
         win = self.check_win()
         if win:
             if not self.find_legal_moves():
@@ -87,11 +115,11 @@ class TicTacToeManager:
 
 
 class Adversary:
-    def __init__(self, manager):
-        self.manager = manager
+    def __init__(self, manager: GameManager):
+        self.manager: GameManager = manager
 
     # Возвращает текущую оценку позиции. Чем меньше ходов до победы - тем выше оценка.
-    def search(self, depth: int, alpha=float('-infinity'), beta=float('+infinity')):
+    def search(self, depth: int, alpha=float('-infinity'), beta=float('+infinity')) -> float:
         if depth == 0:
             return 0
 
@@ -120,7 +148,7 @@ class Adversary:
         return alpha
 
     # Возвращает лучший ход для текущего игрока.
-    def search_root(self, depth):
+    def search_root(self, depth: int) -> int:
         moves: list[int] = self.manager.find_legal_moves()
         best_eval = float('-infinity')
         best_move = None
