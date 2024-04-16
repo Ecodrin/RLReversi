@@ -21,22 +21,30 @@ class Board:
 
 
 class Clickable:
-    def __init__(self, onClick: Callable, *args, hitbox: Rect = pygame.Rect(0, 0, 0, 0)) -> None:
+
+    def __init__(self, hitbox: Rect, onClick: Callable, *args) -> None:
         """
         Clickable (property)
         :param onClick (callback function):
         :param *args (arguments for callback function):
-        :param  hitbox (rectangular):
+        :param hitbox (rectangular):
         """
-        self.onClick = onClick
+        self.hitbox: pygame.Rect = hitbox
+        self.onClick: Callable = onClick
         self.args = args
-        self.hitbox = hitbox
 
-    def process(self) -> None:
+    def check_collision(self) -> bool:
         """
-        checks collision and calls callback
+        Checks collision.
+        :return: Rect collision with mouse
         """
         point = pygame.mouse.get_pos()
         collide = self.hitbox.collidepoint(point)
-        if collide:
+        return collide
+
+    def process(self) -> None:
+        """
+        Calls callback
+        """
+        if self.check_collision():
             self.onClick(*self.args)
