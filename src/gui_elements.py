@@ -53,23 +53,23 @@ class StylizedText:
         self._position = pos
         self.__text = self.__create_text()
 
-    def __is_bold(self) -> int:
+    def __is_bold(self) -> bool:
         """
         :return: Разряд отвечающий за жирность.
         """
-        return self.font_style & 0b001
+        return self.font_style & 0b001 > 0
 
-    def __is_italic(self) -> int:
+    def __is_italic(self) -> bool:
         """
         :return: Разряд отвечающий за курсив.
         """
-        return self.font_style & 0b010
+        return self.font_style & 0b010 > 0
 
-    def __is_underline(self) -> int:
+    def __is_underline(self) -> bool:
         """
         :return: Разряд отвечающий за подчёркивание.
         """
-        return self.font_style & 0b100
+        return self.font_style & 0b100 > 0
 
     def __create_font(self) -> pygame.font.Font:
         """
