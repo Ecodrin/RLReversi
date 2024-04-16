@@ -35,7 +35,7 @@ class Adversary:
 
     # Возвращает текущую оценку позиции. Чем меньше ходов до победы - тем выше оценка.
     def search(self, depth: int, alpha=float('-infinity'), beta=float('+infinity')) -> float:
-        win = self.manager.check_win() * self.manager.turn
+        win = self.manager.check_win() * (1 + depth) * self.manager.turn
 
         if depth == 0:
             return win
