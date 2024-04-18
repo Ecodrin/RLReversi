@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from board import Board
+
+from src.board import Board
 
 
 class GameManager(ABC):
@@ -78,3 +79,6 @@ class Adversary:
                 best_eval = evaluation
                 best_move = move
         return best_move
+
+# Киркегор.
+# Шопенгауэр
