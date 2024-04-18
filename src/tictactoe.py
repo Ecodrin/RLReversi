@@ -15,6 +15,10 @@ class TicTacToeManager(GameManager):
 
     def reset_board(self):
         self.board.create_board()
+        self._crosses: list[int] = []
+        self._noughts: list[int] = []
+        self._last_move: int = None
+        self.turn: int = 1
 
     def make_move(self, cell: int):
         if self.turn == 1:
