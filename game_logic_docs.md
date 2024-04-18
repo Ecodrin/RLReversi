@@ -45,7 +45,7 @@ This class represents an AI opponent for the Tic-Tac-Toe game.
 - Initializes the adversary with a TicTacToeManager object.
 
 ### search(self, depth: int, alpha=float('-infinity'), beta=float('+infinity')) -> int
-- Performs a search to evaluate the position.
+- Performs a search to evaluate the position using given depth.
 - Returns the evaluation score for the current position.
 
 ### search_root(self, depth: int) -> int
