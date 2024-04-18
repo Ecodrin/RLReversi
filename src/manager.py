@@ -79,6 +79,3 @@ class Adversary:
                 best_eval = evaluation
                 best_move = move
         return best_move
-
-# Киркегор.
-# Шопенгауэр
