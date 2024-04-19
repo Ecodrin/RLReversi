@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 from src.board import Board
 
 
@@ -6,7 +7,6 @@ class GameManager(ABC):
     @abstractmethod
     def __init__(self, board: Board) -> None:
         self.board: Board = board
-        self.turn = 1
 
     @abstractmethod
     def reset_board(self) -> None:
@@ -35,13 +35,12 @@ class Adversary:
 
     # Возвращает текущую оценку позиции. Чем меньше ходов до победы - тем выше оценка.
     def search(self, depth: int, alpha=float('-infinity'), beta=float('+infinity')) -> float:
-        win = self.manager.check_win() * (1 + depth) * self.manager.turn
-
         if depth == 0:
-            return win
+            return 0
 
+        win = self.manager.check_win()
         if win:
-            return win
+            return win + depth
 
         available_moves = self.manager.find_legal_moves()
 
@@ -72,7 +71,7 @@ class Adversary:
         for move in moves:
             self.manager.make_move(move)
 
-            evaluation = -self.search(depth - 1)
+            evaluation = self.search(depth - 1)
 
             self.manager.unmake_move(move)
 
