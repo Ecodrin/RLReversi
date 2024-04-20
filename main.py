@@ -1,18 +1,17 @@
 import gymnasium as gym
 import env
 
-envw = gym.envs.make('TicTacToe-v0')
+envw = gym.envs.make('TicTacToe-v0', count_cell=3, count_win_cell=3)
 
 observation, info = envw.reset()
 
 for i in range(100):
-    action = envw.action_space.sample()  # agent policy that uses the observation and info
+    action = envw.action_space.sample()
     observation, reward, terminated, truncated, info = envw.step(action)
     envw.render()
     print('----')
     if terminated or truncated:
         print(f'reward: {reward}')
-        envw.render()
         observation, info = envw.reset()
 
 envw.close()
