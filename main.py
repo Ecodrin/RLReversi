@@ -1,7 +1,7 @@
 import gymnasium as gym
 import env
 
-envw = gym.envs.make('TicTacToe-v0', count_cell=3, count_win_cell=3)
+envw = gym.envs.make('TicTacToe-v0', pieces=3, pieces_to_win=3)
 
 observation, info = envw.reset()
 

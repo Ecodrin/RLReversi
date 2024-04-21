@@ -12,10 +12,10 @@ from src.tictactoe import TicTacToeManager
 
 
 class TicTacToeEnv(gymnasium.Env):
-    def __init__(self, count_cell: int = 3, count_win_cell: int = 3):
-        self.count_cell = count_cell
-        self.observation_space: spaces.Box = spaces.Box(low=-1, high=1, shape=(count_cell, count_cell), dtype=np.int8)
-        self.manager: TicTacToeManager = TicTacToeManager(Board(count_cell), count_win_cell)
+    def __init__(self, pieces: int = 3, pieces_to_win: int = 3):
+        self.count_cell = pieces
+        self.observation_space: spaces.Box = spaces.Box(low=-1, high=1, shape=(pieces, pieces), dtype=np.int8)
+        self.manager: TicTacToeManager = TicTacToeManager(Board(pieces), pieces_to_win)
         self.adversary: Adversary = Adversary(self.manager)
         self.action_space: ActType = ActionSpace(self.manager.find_legal_moves())
 
@@ -25,7 +25,6 @@ class TicTacToeEnv(gymnasium.Env):
         return self.manager.board.board, {}
 
     def step(self, action: ActType) -> tuple[ObsType, SupportsFloat, bool, bool, dict[str, Any]]:
-        # ??????????????
         self.manager.make_move(action)
         reward = self.manager.has_game_ended()
         if reward is not None:
