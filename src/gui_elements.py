@@ -181,6 +181,7 @@ class Button(Clickable):
         if collide:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.button_texture = self.click_texture
+                super().process()
             else:
                 self.button_texture = self.hover_texture
 
