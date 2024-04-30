@@ -3,7 +3,6 @@ import random
 
 import gymnasium
 import numpy as np
-from gymnasium import spaces
 from gymnasium.core import ActType, ObsType
 
 from src.board import Board
@@ -23,7 +22,7 @@ class TicTacToeEnv(gymnasium.Env):
     def reset(self, seed: int | None = None, options: dict[str, Any] | None = None) -> tuple[ObsType, dict[str, Any]]:
         self.manager.reset_board()
         self.action_space.legal_moves = self.manager.find_legal_moves()
-        return self.manager.board.board, {}
+        return np.array(self.manager.board.board), {}
 
     def step(self, action: ActType) -> tuple[ObsType, SupportsFloat, bool, bool, dict[str, Any]]:
         """
@@ -33,13 +32,15 @@ class TicTacToeEnv(gymnasium.Env):
         self.manager.make_move(action)
         reward = self.manager.has_game_ended()
         if reward is not None:
-            return self.manager.board.board, reward, True, False, {'step': action, 'win': False, 'reward': reward}
+            return np.array(self.manager.board.board), reward, True, False, {'step': action, 'win': False, 'reward': reward}
         # Умный ход ботяры(глубина выбирается по тому, что вам нужно)
         self.manager.make_move(self.adversary.search_root(self.depth))
         self.action_space.legal_moves = self.manager.find_legal_moves()
         reward = self.manager.has_game_ended()
         terminated = True if reward is not None else False
-        return (self.manager.board.board, reward, terminated, False,
+        if reward is None:
+            reward = 0
+        return (np.array(self.manager.board.board), reward, terminated, False,
                 {'step': action, 'win': terminated, 'reward': reward})
 
     def render(self, mode='human') -> None:
@@ -53,9 +54,9 @@ class TicTacToeEnv(gymnasium.Env):
         return 0
 
 
-class MoveSpace(spaces.Space):
+class MoveSpace(gymnasium.spaces.Discrete):
     def __init__(self, legal_moves: list[int]):
-        super().__init__()
+        super().__init__(n=len(legal_moves))
         self.legal_moves = legal_moves
 
     def sample(self, mask: Any | None = None) -> int:
@@ -72,5 +73,5 @@ def display(board: list[int], size: int = 3) -> None:
     """
     for i in range(size):
         for j in range(size):
-            print(f'{board[i * int(len(board) ** 0.5) + j]: >2} ', end='')
+            print(f'{board[i * size + j]: >2} ', end='')
         print()
