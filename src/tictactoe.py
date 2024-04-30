@@ -1,5 +1,5 @@
-from src.board import Board
-from src.manager import GameManager
+from board import Board
+from manager import GameManager
 
 
 class TicTacToeManager(GameManager):

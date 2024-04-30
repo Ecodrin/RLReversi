@@ -3,8 +3,10 @@ from gui_elements import Button
 from gui_elements import StylizedText
 from typing import Callable
 from board import Board
+from tictactoe import TicTacToeManager
 import pathlib
 import os
+from manager import Adversary
 
 class HomePage:
 
@@ -27,9 +29,9 @@ class HomePage:
 
         while self.running:
             #Рэндер объектов в Зависимости от текущей страницы
-            pygame.display.flip()
             self.page_render()
             self.page_processes()
+            pygame.display.flip()
  
  #------------------------CОЗДАНИЕ--------------------------------------------------   
     # Создание всех страниц
@@ -120,9 +122,13 @@ class HomePage:
 class ClassicGamePage():
 
     def __init__(self, home_page: HomePage) -> None:
-        self.turn_number = 0
+        self.zero_texture = pathlib.Path("Frame 1.png")
+        self.cross_texture = pathlib.Path("Group 16.png")
+        self.moves = []
         self.size = 3
         self.logic_board = Board(3)
+        self.logic = TicTacToeManager()
+        self.AI = Adversary(self.logic)
         self.visual_board: list[Button] = []
         self.home_page = home_page
         self.objects_on_the_screen = {}
@@ -134,16 +140,16 @@ class ClassicGamePage():
         self.create_button("Back", self.open_home_page, hitbox=pygame.Rect((65, 474, 130, 60)), 
                            inner_text="Back", default_texture=pygame.color.Color((105, 103, 209)), 
                            hover_texture=pygame.color.Color(103, 145, 209), click_texture=pygame.color.Color((103, 171, 209)), border_radius=32)
-        self.create_button("Reset", self.open_home_page, hitbox=pygame.Rect((235, 474, 130, 60)), 
+        self.create_button("Reset", self.restart_game, hitbox=pygame.Rect((235, 474, 130, 60)), 
                            inner_text="Reset", default_texture=pygame.color.Color((105, 103, 209)), 
                            hover_texture=pygame.color.Color(103, 145, 209), click_texture=pygame.color.Color((103, 171, 209)), border_radius=32)
-        self.create_button("Undo", self.open_home_page, hitbox=pygame.Rect((405, 474, 130, 60)), 
+        self.create_button("Undo", self.move_back, hitbox=pygame.Rect((405, 474, 130, 60)), 
                            inner_text="Undo", default_texture=pygame.color.Color((105, 103, 209)), 
                            hover_texture=pygame.color.Color(103, 145, 209), click_texture=pygame.color.Color((103, 171, 209)), border_radius=32)
     # Создание кнопки
     def create_button(self, name_of_object: str, function_on_click: Callable, *args, 
                       hitbox: pygame.Rect=pygame.Rect((165, 300, 270, 60)), inner_text: str='', 
-                      default_texture=pygame.color.Color((105, 103, 209)), hover_texture=pygame.color.Color(103, 145, 209), 
+                      default_texture=(255, 255, 224), hover_texture=pygame.color.Color(103, 145, 209), 
                       click_texture=pygame.color.Color((103, 171, 209)), border_radius: int=0) -> None:
         classic_text = StylizedText(hitbox, inner_text)
         button_classic = Button(function_on_click, *args, hitbox=hitbox, inner_text=classic_text, 
@@ -152,16 +158,14 @@ class ClassicGamePage():
         self.objects_on_the_screen[name_of_object] = button_classic
 
     def create_visual_board(self):
-        zero = pathlib.Path("Frame 1.png")
-        cross = pathlib.Path("Group 16.png")
         for y in range(self.size):
             for x in range(self.size):
-                number_of_button = str(3 * y + x)
-                hitbox = pygame.Rect(112 + x * 131, 40 + y * 131, 119, 119) 
-                self.create_button(number_of_button, self.make_move, number_of_button, zero, cross, hitbox=hitbox, 
-                                   default_texture=pygame.color.Color(218, 96, 96), hover_texture=pygame.color.Color((220, 146, 146)), 
-                                   click_texture=pygame.color.Color(218, 96, 96))
-                self.visual_board.append(self.objects_on_the_screen[number_of_button])
+                number_of_button = 3 * y + x
+                hitbox = pygame.Rect(112 + x * 131, 40 + y * 131, 122, 122) 
+                self.create_button(str(number_of_button), self.make_move, number_of_button, hitbox=hitbox, 
+                                   default_texture=pygame.color.Color(255, 255, 224), hover_texture=pygame.color.Color((255, 255, 224)), 
+                                   click_texture=pygame.color.Color(255, 255, 224))
+                self.visual_board.append(self.objects_on_the_screen[str(number_of_button)])
 
 #-------------------------- Рэндер страницы с классической игрой -----------------   
     def classic_game_render(self) -> None:
@@ -178,21 +182,6 @@ class ClassicGamePage():
     def render_button(self, button_to_render: Button) -> None:
         button_to_render.render(self.home_page.screen)
 
-    def open_home_page(self) -> None:
-        self.home_page.screen.fill((255, 255, 224))
-        self.home_page.page = 0
-
-    def make_move(self, number: str, zero_texture: os.PathLike, cross_texture: os.PathLike):
-        self.turn_number += 1
-        if self.turn_number % 2 == 1:
-            texture_to_put = cross_texture
-        else: 
-            texture_to_put = zero_texture
-        self.objects_on_the_screen[number].default_texture = texture_to_put
-        self.objects_on_the_screen[number].hover_texture = texture_to_put
-        print(number)
-
-
 #-------------------- ТРИГЕР ДЕЙСТВИЙ НА СТРАНИЦЕ--------------------------
     def classic_game_processes(self) -> None:
         for event in pygame.event.get():
@@ -206,6 +195,63 @@ class ClassicGamePage():
                     if event.key == pygame.K_ESCAPE:
                         pygame.quit()
                         self.home_page.running = 0
+
+#----------------------- РАБОТА С ДЕЙСТВИЯМИ НА СТРАНИЦЕ ----------------------
+    def is_move_available(self, number: int):
+        return number in self.logic.find_legal_moves()
+    
+    def make_move(self, number: int) -> None:
+        if self.is_move_available(number):
+            if len(self.moves) % 2 == 0:
+                self.logic.make_move(number)
+                self.moves.append(number)
+                self.visual_board[number].default_texture = self.cross_texture
+                self.visual_board[number].hover_texture = self.cross_texture
+                self.visual_board[number].click_texture = self.cross_texture
+                if self.is_game_continue():
+                    print("process")
+                    self.make_move(self.AI.search_root(3))
+            else:
+                print("YES")
+                self.logic.make_move(number)
+                self.moves.append(number)
+                self.visual_board[number].default_texture = self.zero_texture
+                self.visual_board[number].hover_texture = self.zero_texture
+                self.visual_board[number].click_texture = self.zero_texture
+
+    def is_game_continue(self):
+        winner = self.logic.has_game_ended()
+        if winner is None:
+            return True
+        else:
+            text = ['Ничья', "Крестики", "Нолики"]
+            print(text[winner])
+            return False
+    
+    def move_back(self) -> None:
+        if len(self.moves) > 0:
+            last_move = self.moves[-1]
+            self.logic.unmake_move(last_move)
+            last_cell = self.visual_board[last_move]
+            last_cell.click_texture = pygame.color.Color(255, 255, 224)
+            last_cell.default_texture = pygame.color.Color(255, 255, 224)
+            last_cell.hover_texture = pygame.color.Color(255, 255, 224)
+            self.moves.remove(last_move)
+    
+    def restart_game(self) -> None:
+        if len(self.moves) > 0:
+            self.logic.reset_board()
+            for Cell in self.visual_board:
+                Cell.click_texture = pygame.color.Color(255, 255, 224)
+                Cell.default_texture = pygame.color.Color(255, 255, 224)
+                Cell.hover_texture = pygame.color.Color(255, 255, 224)
+            self.moves = []
+
+    def open_home_page(self) -> None:
+        self.restart_game()
+        self.classic_game_render()
+        self.home_page.screen.fill((255, 255, 224))
+        self.home_page.page = 0
 
 
 start = HomePage(pygame.display.set_mode((600, 600)))
