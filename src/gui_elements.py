@@ -145,7 +145,7 @@ class StylizedText:
 class Button(Clickable):
 
     def __init__(self, onClick: Callable, *args,
-                 hitbox: pygame.Rect, inner_text: StylizedText,
+                 hitbox: pygame.Rect, inner_text: StylizedText | str,
                  default_texture: pygame.color.Color | os.PathLike = pygame.color.Color(255, 255, 255),
                  hover_texture: pygame.color.Color | os.PathLike = pygame.color.Color(160, 160, 160),
                  click_texture: pygame.color.Color | os.PathLike = pygame.color.Color(64, 64, 64),
@@ -163,7 +163,9 @@ class Button(Clickable):
         """
 
         super().__init__(hitbox, onClick, *args)
-        self.inner_text: StylizedText = inner_text
+        if isinstance(inner_text, str):
+            self.inner_text = StylizedText(position=hitbox, content=inner_text)
+        self.inner_text: StylizedText | str = inner_text
         self.default_texture: pygame.color.Color | os.PathLike = default_texture
         self.hover_texture: pygame.color.Color | os.PathLike = hover_texture
         self.click_texture: pygame.color.Color | os.PathLike = click_texture
