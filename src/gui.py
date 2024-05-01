@@ -5,12 +5,15 @@ from typing import Callable
 from board import Board
 from tictactoe import TicTacToeManager
 import pathlib
-import os
 from manager import Adversary
+
 
 class HomePage:
 
-    def __init__(self,  screen: pygame.display, title: str='Tic-Tac-Toe') -> None:
+    def __init__(self,  screen: pygame.display, title: str='Tic-Tac-Toe', depth: int=8, crosses_player: int=0, zeros_player: int=1) -> None:
+        self.crosses_player = crosses_player
+        self.zeros_player = zeros_player
+        self.depth: int = depth
         self.running = 1
         self.page = 0
         self.rendered_pages = []
@@ -29,8 +32,8 @@ class HomePage:
 
         while self.running:
             #Рэндер объектов в Зависимости от текущей страницы
-            self.page_render()
             self.page_processes()
+            self.page_render()
             pygame.display.flip()
  
  #------------------------CОЗДАНИЕ--------------------------------------------------   
@@ -53,7 +56,7 @@ class HomePage:
                            hover_texture=pygame.color.Color(103, 145, 209), click_texture=pygame.color.Color((103, 171, 209)), border_radius=32)
     # Создание главной страницы
     def create_classic_game_page(self) -> None:
-        classic_game_page = ClassicGamePage(self)
+        classic_game_page = ClassicGamePage(self, self.crosses_player, self.zeros_player)
         self.rendered_pages.append(classic_game_page)
 
     # Создание объектов на главной странице
@@ -116,12 +119,16 @@ class HomePage:
                         self.running = 0
     
     def open_classic_game(self) -> None:
+        if self.crosses_player == 1 and self.zeros_player == 0:
+            self.rendered_pages[0].make_move(crosses_player = 1, zeros_player = 0)
         self.page = 1
 
 
 class ClassicGamePage():
 
-    def __init__(self, home_page: HomePage) -> None:
+    def __init__(self, home_page: HomePage, crosses_player: int=0, zeros_player: int=1) -> None:
+        self.crosses_player = crosses_player
+        self.zeros_player = zeros_player
         self.zero_texture = pathlib.Path("Frame 1.png")
         self.cross_texture = pathlib.Path("Group 16.png")
         self.moves = []
@@ -160,11 +167,18 @@ class ClassicGamePage():
     def create_visual_board(self):
         for y in range(self.size):
             for x in range(self.size):
+                c = self.crosses_player
+                z = self.zeros_player
                 number_of_button = 3 * y + x
                 hitbox = pygame.Rect(112 + x * 131, 40 + y * 131, 122, 122) 
-                self.create_button(str(number_of_button), self.make_move, number_of_button, hitbox=hitbox, 
-                                   default_texture=pygame.color.Color(255, 255, 224), hover_texture=pygame.color.Color((255, 255, 224)), 
-                                   click_texture=pygame.color.Color(255, 255, 224))
+                if self.crosses_player == self.zeros_player == 1:
+                    self.create_button(str(number_of_button), self.number_printer, number_of_button, hitbox=hitbox, 
+                                    default_texture=pygame.color.Color(255, 255, 224), hover_texture=pygame.color.Color((255, 255, 224)), 
+                                    click_texture=pygame.color.Color(255, 255, 224))
+                else:
+                    self.create_button(str(number_of_button), self.make_move, number_of_button, c, z, hitbox=hitbox, 
+                                    default_texture=pygame.color.Color(255, 255, 224), hover_texture=pygame.color.Color((255, 255, 224)), 
+                                    click_texture=pygame.color.Color(255, 255, 224))
                 self.visual_board.append(self.objects_on_the_screen[str(number_of_button)])
 
 #-------------------------- Рэндер страницы с классической игрой -----------------   
@@ -184,6 +198,9 @@ class ClassicGamePage():
 
 #-------------------- ТРИГЕР ДЕЙСТВИЙ НА СТРАНИЦЕ--------------------------
     def classic_game_processes(self) -> None:
+        if (self.crosses_player == 1) and (self.zeros_player == 1):
+            if self.is_game_continue():
+                self.make_move()
         for event in pygame.event.get():
                 for name in self.objects_on_the_screen:
                     if isinstance(self.objects_on_the_screen[name], Button):
@@ -198,26 +215,49 @@ class ClassicGamePage():
 
 #----------------------- РАБОТА С ДЕЙСТВИЯМИ НА СТРАНИЦЕ ----------------------
     def is_move_available(self, number: int):
-        return number in self.logic.find_legal_moves()
+        if len(self.moves) == 0:
+            return True
+        if self.is_game_continue():
+            return number in self.logic.find_legal_moves()
+        return False
     
-    def make_move(self, number: int) -> None:
-        if self.is_move_available(number):
+    def make_move(self, number: int=-1, crosses_player: int=1, zeros_player=1) -> None:
+        if self.is_game_continue():
             if len(self.moves) % 2 == 0:
-                self.logic.make_move(number)
-                self.moves.append(number)
-                self.visual_board[number].default_texture = self.cross_texture
-                self.visual_board[number].hover_texture = self.cross_texture
-                self.visual_board[number].click_texture = self.cross_texture
-                if self.is_game_continue():
-                    print("process")
-                    self.make_move(self.AI.search_root(3))
+                if crosses_player == 0 :
+                    self.crosses_move(number)
+                    self.make_move(crosses_player=crosses_player, zeros_player=zeros_player)
+                if crosses_player == 1:
+                    computers_turn = self.AI.search_root(8)
+                    self.crosses_move(computers_turn)
+                    if zeros_player == 1:
+                        self.make_move(crosses_player=crosses_player, zeros_player=zeros_player)
             else:
-                print("YES")
-                self.logic.make_move(number)
-                self.moves.append(number)
-                self.visual_board[number].default_texture = self.zero_texture
-                self.visual_board[number].hover_texture = self.zero_texture
-                self.visual_board[number].click_texture = self.zero_texture
+                if zeros_player == 0:
+                    self.zeros_move(number)
+                    self.make_move(crosses_player=crosses_player, zeros_player=zeros_player)
+                if zeros_player == 1:
+                    computers_turn = self.AI.search_root(8)
+                    self.zeros_move(computers_turn)
+        else:
+            for Cell in self.visual_board:
+                Cell.onClick = self.number_printer
+                         
+    def crosses_move(self, number):
+        if self.is_move_available(number):
+            self.logic.make_move(number)
+            self.moves.append(number)
+            self.visual_board[number].default_texture = self.cross_texture
+            self.visual_board[number].hover_texture = self.cross_texture
+            self.visual_board[number].click_texture = self.cross_texture
+
+    def zeros_move(self, number):
+        if self.is_move_available(number):
+            self.logic.make_move(number)
+            self.moves.append(number)
+            self.visual_board[number].default_texture = self.zero_texture
+            self.visual_board[number].hover_texture = self.zero_texture
+            self.visual_board[number].click_texture = self.zero_texture
 
     def is_game_continue(self):
         winner = self.logic.has_game_ended()
@@ -225,27 +265,30 @@ class ClassicGamePage():
             return True
         else:
             text = ['Ничья', "Крестики", "Нолики"]
-            print(text[winner])
             return False
     
     def move_back(self) -> None:
-        if len(self.moves) > 0:
+        if len(self.moves) > 1 or not (self.crosses_player == 1 and self.zeros_player == 0):
             last_move = self.moves[-1]
             self.logic.unmake_move(last_move)
             last_cell = self.visual_board[last_move]
             last_cell.click_texture = pygame.color.Color(255, 255, 224)
             last_cell.default_texture = pygame.color.Color(255, 255, 224)
             last_cell.hover_texture = pygame.color.Color(255, 255, 224)
+            last_cell.onClick = self.make_move
             self.moves.remove(last_move)
     
-    def restart_game(self) -> None:
+    def restart_game(self) -> None:    
         if len(self.moves) > 0:
             self.logic.reset_board()
             for Cell in self.visual_board:
                 Cell.click_texture = pygame.color.Color(255, 255, 224)
                 Cell.default_texture = pygame.color.Color(255, 255, 224)
                 Cell.hover_texture = pygame.color.Color(255, 255, 224)
+                Cell.onClick = self.make_move
             self.moves = []
+            if self.crosses_player == 1 and self.zeros_player == 0:
+                self.make_move(crosses_player = 1, zeros_player = 0)
 
     def open_home_page(self) -> None:
         self.restart_game()
@@ -253,6 +296,13 @@ class ClassicGamePage():
         self.home_page.screen.fill((255, 255, 224))
         self.home_page.page = 0
 
+    def number_printer(self, *args):
+        print(args[0])
 
-start = HomePage(pygame.display.set_mode((600, 600)))
-start.run()
+
+def main():
+    start = HomePage(pygame.display.set_mode((600, 600)), crosses_player=1, zeros_player=0)
+    start.run()
+
+if __name__ == '__main__':
+    main()
