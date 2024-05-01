@@ -1,9 +1,4 @@
 /venv/
 /.idea/
 /.vscode/
-<<<<<<< HEAD
 **/__pycache__/
-=======
-*/__pycache__/
-./src/.idea/
->>>>>>> 8e7c2e8412922cc39b5b8100ce0193044642a6a9
