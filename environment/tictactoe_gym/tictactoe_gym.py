@@ -24,7 +24,7 @@ class TicTacToeEnv(gymnasium.Env):
         self.action_space.legal_moves = self.manager.find_legal_moves()
         # делаем первый ход(чтобы модель ходила вторая)
         first_step = random.choice(self.manager.find_legal_moves())
-        self.manager.find_legal_moves().remove(first_step)
+        self.action_space.legal_moves.remove(first_step)
         self.manager.make_move(first_step)
         return np.array(self.manager.board.board), {}
 
@@ -44,7 +44,7 @@ class TicTacToeEnv(gymnasium.Env):
         terminated = True if reward is not None else False
         if reward is None:
             reward = 0
-        return (np.array(self.manager.board.board), reward, terminated, False,
+        return (np.array(self.manager.board.board), -reward, terminated, False,
                 {'step': action, 'win': terminated, 'reward': reward})
 
     def render(self, mode='human') -> None:
