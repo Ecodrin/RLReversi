@@ -11,7 +11,7 @@ from src.tictactoe import TicTacToeManager
 
 
 class TicTacToeEnv(gymnasium.Env):
-    def __init__(self, size: int = 3, pieces_to_win: int = 3, depth: int = 1):
+    def __init__(self, size: int = 3, pieces_to_win: int = 3, depth: int = 5):
         self.depth = depth
         self.size = size
         self.manager: TicTacToeManager = TicTacToeManager(Board(size), pieces_to_win)
@@ -22,6 +22,10 @@ class TicTacToeEnv(gymnasium.Env):
     def reset(self, seed: int | None = None, options: dict[str, Any] | None = None) -> tuple[ObsType, dict[str, Any]]:
         self.manager.reset_board()
         self.action_space.legal_moves = self.manager.find_legal_moves()
+        # делаем первый ход(чтобы модель ходила вторая)
+        first_step = random.choice(self.manager.find_legal_moves())
+        self.manager.find_legal_moves().remove(first_step)
+        self.manager.make_move(first_step)
         return np.array(self.manager.board.board), {}
 
     def step(self, action: ActType) -> tuple[ObsType, SupportsFloat, bool, bool, dict[str, Any]]:
@@ -30,13 +34,13 @@ class TicTacToeEnv(gymnasium.Env):
         :return: (поле, оценка, победа(bool), False, информация о шаге)
         """
         self.manager.make_move(action)
-        reward = self.manager.has_game_ended()
+        reward = self.manager.check_win()
         if reward is not None:
-            return np.array(self.manager.board.board), reward, True, False, {'step': action, 'win': False, 'reward': reward}
+            return np.array(self.manager.board.board), reward, True, False, {'step': action, 'win': True, 'reward': reward}
         # Умный ход ботяры(глубина выбирается по тому, что вам нужно)
         self.manager.make_move(self.adversary.search_root(self.depth))
         self.action_space.legal_moves = self.manager.find_legal_moves()
-        reward = self.manager.has_game_ended()
+        reward = self.manager.check_win()
         terminated = True if reward is not None else False
         if reward is None:
             reward = 0
