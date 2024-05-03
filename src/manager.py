@@ -8,6 +8,7 @@ class GameManager(ABC):
     @abstractmethod
     def __init__(self, board: Board) -> None:
         self.board: Board = board
+        self.turn: int = 1
 
     @abstractmethod
     def reset_board(self) -> None:
@@ -38,7 +39,7 @@ class Adversary:
     def search(self, depth: int, alpha=float('-infinity'), beta=float('+infinity')) -> float:
         win = self.manager.check_win()
         if win:
-            return win
+            return win * depth * self.manager.turn
 
         if depth == 0:
             return 0
