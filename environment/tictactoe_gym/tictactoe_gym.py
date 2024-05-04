@@ -36,16 +36,16 @@ class TicTacToeEnv(gymnasium.Env):
         self.manager.make_move(action)
         reward = self.manager.check_win()
         if reward is not None:
-            return np.array(self.manager.board.board), reward, True, False, {'step': action, 'win': True, 'reward': reward}
+            return np.array(self.manager.board.board), -reward, True, False, {'step': action, 'win': True, 'reward': -reward}
         # Умный ход ботяры(глубина выбирается по тому, что вам нужно)
         self.manager.make_move(self.adversary.search_root(self.depth))
         self.action_space.legal_moves = self.manager.find_legal_moves()
         reward = self.manager.check_win()
         terminated = True if reward is not None else False
         if reward is None:
-            reward = 0
+            reward = -1
         return (np.array(self.manager.board.board), -reward, terminated, False,
-                {'step': action, 'win': terminated, 'reward': reward})
+                {'step': action, 'win': terminated, 'reward': -reward})
 
     def render(self, mode='human') -> None:
         match mode:
@@ -65,6 +65,7 @@ class MoveSpace(gymnasium.spaces.Discrete):
 
     def sample(self, mask: Any | None = None) -> int:
         move = random.choice(self.legal_moves)
+        self.legal_moves.remove(move)
         return move
 
 
