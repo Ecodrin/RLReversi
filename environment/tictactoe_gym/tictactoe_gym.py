@@ -23,7 +23,7 @@ class TicTacToeEnv(gymnasium.Env):
         self.manager.reset_board()
         self.action_space.legal_moves = self.manager.find_legal_moves()
         # делаем первый ход(чтобы модель ходила вторая)
-        first_step = random.choice(self.manager.find_legal_moves())
+        first_step = self.adversary.search_root(self.depth)
         self.manager.make_move(first_step)
         return np.array(self.manager.board.board), {}
 
@@ -35,7 +35,8 @@ class TicTacToeEnv(gymnasium.Env):
         self.manager.make_move(action)
         reward = self.manager.check_win()
         if reward is not None:
-            return np.array(self.manager.board.board), -reward, True, False, {'step': action, 'win': True, 'reward': -reward}
+            return (np.array(self.manager.board.board), -reward,
+                    True, False, {'step': action, 'win': True, 'reward': -reward})
         # Умный ход ботяры(глубина выбирается по тому, что вам нужно)
         self.manager.make_move(self.adversary.search_root(self.depth))
         self.action_space.legal_moves = self.manager.find_legal_moves()
