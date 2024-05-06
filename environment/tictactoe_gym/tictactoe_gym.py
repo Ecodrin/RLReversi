@@ -17,13 +17,14 @@ class TicTacToeEnv(gymnasium.Env):
         self.manager: TicTacToeManager = TicTacToeManager(Board(size), pieces_to_win)
         self.adversary: Adversary = Adversary(self.manager)
         self.action_space: ActType = MoveSpace(self.manager.find_legal_moves())
-        self.observation_space: ObsType = gymnasium.spaces.Box(low=-1, high=1, shape=(self.size ** 2,), dtype=np.int8)
+        self.observation_space: ObsType = gymnasium.spaces.Box(low=-1, high=1, shape=(self.size ** 2,), dtype=int)
 
     def reset(self, seed: int | None = None, options: dict[str, Any] | None = None) -> tuple[ObsType, dict[str, Any]]:
         self.manager.reset_board()
         self.action_space.legal_moves = self.manager.find_legal_moves()
         # делаем первый ход(чтобы модель ходила вторая)
         first_step = self.adversary.search_root(self.depth)
+        self.action_space.legal_moves.remove(first_step)
         self.manager.make_move(first_step)
         return np.array(self.manager.board.board), {}
 
