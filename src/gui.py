@@ -1,9 +1,11 @@
 import pygame
+import pathlib
+
 from gui_elements import Button, StylizedText
 from typing import Callable, Any
+
 from board import Board
 from tictactoe import TicTacToeManager
-import pathlib
 from manager import Adversary
 
 
@@ -48,6 +50,9 @@ class HomePage:
 # ------------------------CОЗДАНИЕ--------------------------------------------------
     # Создание всех страниц
     def page_create(self) -> None:
+        """
+        Функция создаёт гланую страницу и страницу с игрой 3 на 3
+        """
         self.create_home_page()
         self.create_classic_game_page()
 
@@ -67,7 +72,7 @@ class HomePage:
 
     def create_classic_game_page(self) -> None:
         classic_game_page = ClassicGamePage(
-            self, self.crosses_player, self.zeros_player)
+            self, size=3, crosses_player=self.crosses_player, zeros_player=self.zeros_player)
         self.rendered_pages.append(classic_game_page)
 
     # Создание объектов на главной странице
@@ -77,26 +82,31 @@ class HomePage:
                       hover_texture=pygame.color.Color(103, 145, 209), click_texture=pygame.color.Color((103, 171, 209)), border_radius: int = 0) -> None:
         """
         :param function_on_click (callback function):
-        :param *args (arguments for callback function):
+        :param args (arguments for callback function):
         :param hitbox (rectangular):
         :param inner_text: str = 'NO TEKST'
         :param text_colour: Цвет.
         :param font_family: Шрифт текста.
         :param font_size: Размер текста.
         :param font_style: Стиль текста. Задаётся битовой маской: 0b001 - жирный, 0b010 - курсив, 0b100 - подчёркивание.
-        :return:
         :param default_texture: Стандартная текстура кнопки.
         :param hover_texture: Текстура при наведении курсора.
         :param click_texture: Текстура при клике.
         :param border_radius: Радиус округления.
         """
-        classic_text = StylizedText(hitbox, inner_text)
-        button_classic = Button(function_on_click, hitbox=hitbox, inner_text=classic_text,
-                                default_texture=default_texture, hover_texture=hover_texture,
-                                click_texture=click_texture, border_radius=32)
-        self.objects_on_the_screen[name_of_object] = button_classic
+        button_text = StylizedText(hitbox, inner_text, text_colour=text_colour,
+                                   font_family=font_family, font_size=font_size, font_style=font_style)
+        button = Button(function_on_click, hitbox=hitbox, inner_text=button_text,
+                        default_texture=default_texture, hover_texture=hover_texture,
+                        click_texture=click_texture, border_radius=32)
+        self.objects_on_the_screen[name_of_object] = button
 
     def create_image(self, name: str, file_with_image: str, coords_of_image: tuple) -> None:
+        """
+        :param name: Название объекта
+        :param file_with_image: Путь до файла с изображением
+        :param coords_of_image: координаты изображения
+        """
         self.objects_on_the_screen[name] = pygame.image.load(file_with_image)
         self.coordinates_of_images[name] = coords_of_image
 
@@ -153,16 +163,16 @@ class HomePage:
 
 class ClassicGamePage():
 
-    def __init__(self, home_page: HomePage, crosses_player: int = 0, zeros_player: int = 1) -> None:
+    def __init__(self, home_page: HomePage, size: int = 3, crosses_player: int = 0, zeros_player: int = 1) -> None:
         self.crosses_player = crosses_player
         self.zeros_player = zeros_player
         self.zero_texture = pathlib.Path("Frame 1.png")
         self.cross_texture = pathlib.Path("Group 16.png")
         self.moves = []
-        self.size = 3
-        self.logic_board = Board(3)
-        self.logic = TicTacToeManager()
-        self.AI = Adversary(self.logic)
+        self.size = size
+        logic_board = Board(size)
+        self.logic = TicTacToeManager(logic_board)
+        self.computer = Adversary(self.logic)
         # Временно функцию нейронки выполняет AI
         self.Neiro = Adversary(self.logic)
         self.visual_board: list[Button] = []
@@ -214,10 +224,11 @@ class ClassicGamePage():
 
 # -------------------------- Рэндер страницы с классической игрой -----------------
     def classic_game_render(self) -> None:
-        pygame.draw.line(self.home_page.screen, (133, 116, 115),
-                         (368, 26), (368, 438), 6)  # правая
-        pygame.draw.line(self.home_page.screen, (133, 116, 115),
-                         (237, 26), (237, 438), 6)  # левая
+        for i in range(self.size - 1):
+            pygame.draw.line(self.home_page.screen, (133, 116, 115),
+                             (368, 26), (368, 438), 6)  # правая
+            pygame.draw.line(self.home_page.screen, (133, 116, 115),
+                             (237, 26), (237, 438), 6)  # левая
         pygame.draw.line(self.home_page.screen, (133, 116, 115),
                          (97, 165), (509, 165), 6)  # верхняя
         pygame.draw.line(self.home_page.screen, (133, 116, 115),
@@ -234,6 +245,7 @@ class ClassicGamePage():
 # -------------------- ТРИГЕР ДЕЙСТВИЙ НА СТРАНИЦЕ--------------------------
     def classic_game_processes(self) -> None:
         if (self.crosses_player == 1) and (self.zeros_player == 1):
+
             if self.is_game_continue():
                 self.make_move()
         for event in pygame.event.get():
@@ -257,6 +269,7 @@ class ClassicGamePage():
         return False
 
     def make_move(self, number: int = -1, crosses_player: int = 1, zeros_player=1) -> None:
+        print(number)
         if self.is_game_continue():
             if len(self.moves) % 2 == 0:
                 if crosses_player == 0:
@@ -264,7 +277,7 @@ class ClassicGamePage():
                     self.make_move(crosses_player=crosses_player,
                                    zeros_player=zeros_player)
                 if crosses_player == 1:
-                    computers_turn = self.AI.search_root(8)
+                    computers_turn = self.computer.search_root(8)
                     self.crosses_move(computers_turn)
                     if zeros_player == 1:
                         self.make_move(crosses_player=crosses_player,
@@ -282,7 +295,7 @@ class ClassicGamePage():
                     self.make_move(crosses_player=crosses_player,
                                    zeros_player=zeros_player)
                 if zeros_player == 1:
-                    computers_turn = self.AI.search_root(8)
+                    computers_turn = self.computer.search_root(8)
                     self.zeros_move(computers_turn)
                 if zeros_player == 2:
                     computers_turn = self.Neiro.search_root(8)
@@ -318,7 +331,7 @@ class ClassicGamePage():
             return False
 
     def move_back(self) -> None:
-        if len(self.moves) > 1 or not (self.crosses_player == 1 and self.zeros_player == 0):
+        if len(self.moves) > 0 and not (self.crosses_player == 1 and self.zeros_player == 0):
             last_move = self.moves[-1]
             self.logic.unmake_move(last_move)
             last_cell = self.visual_board[last_move]
@@ -351,7 +364,7 @@ class ClassicGamePage():
 
 
 def main():
-    start = HomePage(pygame.display.set_mode((600, 600)),
+    start = HomePage(pygame.display.set_mode((1000, 1000)),
                      crosses_player='Игрок', zeros_player='Комп')
     start.run()
 
