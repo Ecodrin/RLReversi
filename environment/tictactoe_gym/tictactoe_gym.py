@@ -17,25 +17,28 @@ class TicTacToeEnv(gymnasium.Env):
         self.manager: TicTacToeManager = TicTacToeManager(Board(size), pieces_to_win)
         self.adversary: Adversary = Adversary(self.manager)
         self.action_space: ActType = MoveSpace(self.manager.find_legal_moves())
-        self.observation_space: ObsType = gymnasium.spaces.Box(low=-1, high=1, shape=(self.size ** 2,), dtype=np.int8)
+        self.observation_space: ObsType = gymnasium.spaces.Discrete(3 ** (size ** 2))
 
     def reset(self, seed: int | None = None, options: dict[str, Any] | None = None) -> tuple[ObsType, dict[str, Any]]:
         self.manager.reset_board()
         self.action_space.legal_moves = self.manager.find_legal_moves()
         # делаем первый ход(чтобы модель ходила вторая)
-        first_step = self.adversary.search_root(self.depth)
-        self.manager.make_move(first_step)
-        return np.array(self.manager.board.board), {}
+        first_move = self.adversary.search_root(self.depth)
+        self.action_space.legal_moves.remove(first_move)
+        self.manager.make_move(first_move)
+        return self.manager.board.get_uid(), {}
 
     def step(self, action: ActType) -> tuple[ObsType, SupportsFloat, bool, bool, dict[str, Any]]:
         """
         :param action: Клетка, куда ходит модель
         :return: (поле, оценка, победа(bool), False, информация о шаге)
         """
+        if action not in self.manager.find_legal_moves():
+            return self.manager.board.get_uid(), -10, False, False, {}
         self.manager.make_move(action)
         reward = self.manager.check_win()
         if reward is not None:
-            return (np.array(self.manager.board.board), -reward,
+            return (self.manager.board.get_uid(), -reward,
                     True, False, {'step': action, 'win': True, 'reward': -reward})
         # Умный ход ботяры(глубина выбирается по тому, что вам нужно)
         self.manager.make_move(self.adversary.search_root(self.depth))
@@ -43,8 +46,8 @@ class TicTacToeEnv(gymnasium.Env):
         reward = self.manager.check_win()
         terminated = True if reward is not None else False
         if reward is None:
-            reward = 1
-        return (np.array(self.manager.board.board), -reward, terminated, False,
+            reward = 0
+        return (self.manager.board.get_uid(), -reward, terminated, False,
                 {'step': action, 'win': terminated, 'reward': -reward})
 
     def render(self, mode='human') -> None:
@@ -58,9 +61,10 @@ class TicTacToeEnv(gymnasium.Env):
         return 0
 
 
-class MoveSpace(gymnasium.spaces.Discrete):
+class MoveSpace(gymnasium.spaces.Space):
     def __init__(self, legal_moves: list[int]):
-        super().__init__(n=len(legal_moves))
+        super().__init__()
+        self.n = len(legal_moves)
         self.legal_moves = legal_moves
 
     def sample(self, mask: Any | None = None) -> int:
