@@ -1,7 +1,7 @@
 import pygame
 import pathlib
 
-from gui_elements import Button, StylizedText
+from gui_elements import Button, StylizedText, ClicableCell, GroupObjectClass
 from typing import Callable, Any
 
 from board import Board
@@ -24,7 +24,8 @@ class HomePage:
         self.zeros_player: int = players[zeros_player]
         self.depth: int = depth
         self.running: int = 1
-        self.page: int = 0
+        self.size = 0
+        self.page: int = 1
         self.rendered_pages: list[Any] = []
         self.screen: pygame.display = screen
         self.objects_on_the_screen: dict = {}
@@ -37,6 +38,7 @@ class HomePage:
         Разделена на 2 части - создание объектов, их рэндер и обработка действий.
         """
         pygame.init()
+        self.rendered_pages.append(self)
         self.page_create()
         pygame.display.set_caption(self.title)
         self.screen.fill((255, 255, 224))
@@ -54,25 +56,17 @@ class HomePage:
         Функция создаёт гланую страницу и страницу с игрой 3 на 3
         """
         self.create_home_page()
-        self.create_classic_game_page()
+        self.create_game_page()
 
     # Создание главной страницы
     def create_home_page(self) -> None:
-        self.create_image('start_image', 'Start Desk.png', (165, 10))
-        self.create_button("classic_game", self.open_classic_game, hitbox=pygame.Rect((165, 300, 270, 60)),
-                           inner_text='3 × 3', default_texture=pygame.color.Color((105, 103, 209)),
-                           hover_texture=pygame.color.Color(103, 145, 209), click_texture=pygame.color.Color((103, 171, 209)), border_radius=32)
-        self.create_button("four_game", self.open_classic_game, hitbox=pygame.Rect((165, 380, 270, 60)),
-                           inner_text='4 × 4', default_texture=pygame.color.Color((105, 103, 209)),
-                           hover_texture=pygame.color.Color(103, 145, 209), click_texture=pygame.color.Color((103, 171, 209)), border_radius=32)
-        self.create_button("user_game", self.open_classic_game, hitbox=pygame.Rect((165, 460, 270, 60)),
-                           inner_text='...×...   0', default_texture=pygame.color.Color((105, 103, 209)),
-                           hover_texture=pygame.color.Color(103, 145, 209), click_texture=pygame.color.Color((103, 171, 209)), border_radius=32)
+        self.create_image('start_image', 'Start Desk.png', (245, 15))
+        self.create_group_of_buttons()
     # Создание главной страницы
 
-    def create_classic_game_page(self) -> None:
-        classic_game_page = ClassicGamePage(
-            self, size=3, crosses_player=self.crosses_player, zeros_player=self.zeros_player)
+    def create_game_page(self, size: int = 3, pieces_to_win: int = 3) -> None:
+        classic_game_page = GamePage(
+            self, size=size, pieces_to_win=pieces_to_win, crosses_player=self.crosses_player, zeros_player=self.zeros_player)
         self.rendered_pages.append(classic_game_page)
 
     # Создание объектов на главной странице
@@ -96,10 +90,25 @@ class HomePage:
         """
         button_text = StylizedText(hitbox, inner_text, text_colour=text_colour,
                                    font_family=font_family, font_size=font_size, font_style=font_style)
-        button = Button(function_on_click, hitbox=hitbox, inner_text=button_text,
+        button = Button(function_on_click, *args, hitbox=hitbox, inner_text=button_text,
                         default_texture=default_texture, hover_texture=hover_texture,
                         click_texture=click_texture, border_radius=32)
-        self.objects_on_the_screen[name_of_object] = button
+        return button
+
+    def create_group_of_buttons(self):
+        buttons = []
+        buttons.append(self.create_button("classic_game", self.open_game_page, hitbox=pygame.Rect((165, 400, 400, 90)),
+                                          inner_text='3 × 3', default_texture=pygame.color.Color((105, 103, 209)),
+                                          hover_texture=pygame.color.Color(103, 145, 209), click_texture=pygame.color.Color((103, 171, 209)), border_radius=32))
+        buttons.append(self.create_button("four_game", self.open_game_page, 4, 3, hitbox=pygame.Rect((165, 380, 400, 90)),
+                                          inner_text='4 × 4', default_texture=pygame.color.Color((105, 103, 209)),
+                                          hover_texture=pygame.color.Color(103, 145, 209), click_texture=pygame.color.Color((103, 171, 209)), border_radius=32))
+        buttons.append(self.create_button("user_game", self.open_game_page, 8, 5, hitbox=pygame.Rect((165, 460, 400, 90)),
+                                          inner_text='...×...   0', default_texture=pygame.color.Color((105, 103, 209)),
+                                          hover_texture=pygame.color.Color(103, 145, 209), click_texture=pygame.color.Color((103, 171, 209)), border_radius=32))
+        group_of_buttons = GroupObjectClass(
+            buttons, pygame.Rect(242, 438, 400, 332), 'vertical', (20, 20))
+        self.objects_on_the_screen["GroupOfButtons"] = group_of_buttons
 
     def create_image(self, name: str, file_with_image: str, coords_of_image: tuple) -> None:
         """
@@ -114,21 +123,19 @@ class HomePage:
     # Определение страницы для рэндера
     def page_render(self) -> None:
         if self.page == 0:
-            self.render_homepage()
-        if self.page == 1:
-            self.screen.fill((255, 255, 224))
-            self.rendered_pages[0].classic_game_render()
+            self.render()
+        else:
+            self.rendered_pages[self.page].classic_game_render()
 
     # Отображение главной страницы
-    def render_homepage(self) -> None:
+
+    def render(self) -> None:
         for name in self.objects_on_the_screen:
-            if isinstance(self.objects_on_the_screen[name], Button):
-                self.render_button(self.objects_on_the_screen[name])
             if isinstance(self.objects_on_the_screen[name], pygame.Surface):
                 self.render_image(name)
-
-    def render_button(self, button_to_render: Button) -> None:
-        button_to_render.render(self.screen)
+            if isinstance(self.objects_on_the_screen[name], GroupObjectClass):
+                print("Yes")
+                self.objects_on_the_screen[name].render(self.screen)
 
     def render_image(self, name_image_to_render: str) -> None:
         self.screen.blit(
@@ -137,15 +144,14 @@ class HomePage:
 # ---------------------------------ОБРАБОТКА ДЕЙСТВИЙ-------------------------------------------
     # Функция для определения какая страница должна прогоняться на действия
     def page_processes(self) -> None:
-        if self.page == 0:
-            self.home_page_processes()
-        if self.page == 1:
-            self.rendered_pages[0].classic_game_processes()
+        self.rendered_pages[self.page].processes()
 
-    def home_page_processes(self) -> None:
+    def processes(self) -> None:
         for event in pygame.event.get():
             for name in self.objects_on_the_screen:
                 if isinstance(self.objects_on_the_screen[name], Button):
+                    self.objects_on_the_screen[name].hover_click(event)
+                if isinstance(self.objects_on_the_screen[name], GroupObjectClass):
                     self.objects_on_the_screen[name].hover_click(event)
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -155,95 +161,131 @@ class HomePage:
                     pygame.quit()
                     self.running = 0
 
-    def open_classic_game(self) -> None:
+    def open_game_page(self, size: int = 3, pieces_to_win: int = 3) -> None:
+        print(size)
+        self.screen.fill((255, 255, 224))
+        index = -1
+        for i in self.rendered_pages:
+            index += 1
+            if i.size == size:
+                if self.crosses_player == 1 and self.zeros_player == 0:
+                    self.rendered_pages[0].make_move(
+                        crosses_player=1, zeros_player=0)
+                self.page = index
+                break
+        else:
+            self.create_game_page(size, pieces_to_win)
+            self.page = -1
+
+    def open_four_game(self) -> None:
         if self.crosses_player == 1 and self.zeros_player == 0:
             self.rendered_pages[0].make_move(crosses_player=1, zeros_player=0)
-        self.page = 1
 
 
-class ClassicGamePage():
+class GamePage():
 
-    def __init__(self, home_page: HomePage, size: int = 3, crosses_player: int = 0, zeros_player: int = 1) -> None:
+    def __init__(self, home_page: HomePage, size: int = 3, pieces_to_win: int = 0, crosses_player: int = 0, zeros_player: int = 1) -> None:
         self.crosses_player = crosses_player
         self.zeros_player = zeros_player
-        self.zero_texture = pathlib.Path("Frame 1.png")
-        self.cross_texture = pathlib.Path("Group 16.png")
+        self.zero_texture = pathlib.Path("Subtract.png")
+        self.cross_texture = pathlib.Path("Union.png")
         self.moves = []
         self.size = size
+        if pieces_to_win == 0:
+            self.pieceses_to_win: int = self.size
+        else:
+            self.pieceses_to_win: int = pieces_to_win
         logic_board = Board(size)
-        self.logic = TicTacToeManager(logic_board)
+        self.logic = TicTacToeManager(logic_board, self.pieceses_to_win)
         self.computer = Adversary(self.logic)
         # Временно функцию нейронки выполняет AI
         self.Neiro = Adversary(self.logic)
         self.visual_board: list[Button] = []
         self.home_page = home_page
         self.objects_on_the_screen = {}
-        self.create_classic_game_page()
+        self.create_game_page()
 
 # ------------------------ СОЗДАНИЕ СТРАНИЦЫ С ИГРОЙ ---------------------------------
-    def create_classic_game_page(self) -> None:
+    def create_game_page(self) -> None:
         self.create_visual_board()
-        self.create_button("Back", self.open_home_page, hitbox=pygame.Rect((65, 474, 130, 60)),
-                           inner_text="Back", default_texture=pygame.color.Color((105, 103, 209)),
-                           hover_texture=pygame.color.Color(103, 145, 209), click_texture=pygame.color.Color((103, 171, 209)), border_radius=32)
-        self.create_button("Reset", self.restart_game, hitbox=pygame.Rect((235, 474, 130, 60)),
-                           inner_text="Reset", default_texture=pygame.color.Color((105, 103, 209)),
-                           hover_texture=pygame.color.Color(103, 145, 209), click_texture=pygame.color.Color((103, 171, 209)), border_radius=32)
-        self.create_button("Undo", self.move_back, hitbox=pygame.Rect((405, 474, 130, 60)),
-                           inner_text="Undo", default_texture=pygame.color.Color((105, 103, 209)),
-                           hover_texture=pygame.color.Color(103, 145, 209), click_texture=pygame.color.Color((103, 171, 209)), border_radius=32)
+        self.create_sticks()
+        self.create_buttons()
     # Создание кнопки
 
     def create_button(self, name_of_object: str, function_on_click: Callable, *args,
                       hitbox: pygame.Rect = pygame.Rect((165, 300, 270, 60)), inner_text: str = '',
                       default_texture=(255, 255, 224), hover_texture=pygame.color.Color(103, 145, 209),
                       click_texture=pygame.color.Color((103, 171, 209)), border_radius: int = 0) -> None:
-        classic_text = StylizedText(hitbox, inner_text)
-        button_classic = Button(function_on_click, *args, hitbox=hitbox, inner_text=classic_text,
-                                default_texture=default_texture, hover_texture=hover_texture,
-                                click_texture=click_texture, border_radius=0)
-        self.objects_on_the_screen[name_of_object] = button_classic
+        text = StylizedText(hitbox, inner_text)
+        button = Button(function_on_click, *args, hitbox=hitbox, inner_text=text,
+                        default_texture=default_texture, hover_texture=hover_texture,
+                        click_texture=click_texture, border_radius=0)
+        return button
+
+    def create_buttons(self):
+        buttons = []
+        buttons.append(self.create_button("Back", self.open_home_page, hitbox=pygame.Rect((65, 474, 190, 90)), inner_text="Back", default_texture=pygame.color.Color(
+            (105, 103, 209)), hover_texture=pygame.color.Color(103, 145, 209), click_texture=pygame.color.Color((103, 171, 209)), border_radius=32))
+        buttons.append(self.create_button("Reset", self.restart_game, hitbox=pygame.Rect((235, 474, 190, 90)), inner_text="Reset", default_texture=pygame.color.Color((105, 103, 209)),
+                                          hover_texture=pygame.color.Color(103, 145, 209), click_texture=pygame.color.Color((103, 171, 209)), border_radius=32))
+        buttons.append(self.create_button("Undo", self.move_back, hitbox=pygame.Rect((405, 474, 190, 90)),
+                                          inner_text="Undo", default_texture=pygame.color.Color((105, 103, 209)),
+                                          hover_texture=pygame.color.Color(103, 145, 209), click_texture=pygame.color.Color((103, 171, 209)), border_radius=32))
+        group_of_buttons = GroupObjectClass(
+            buttons, pygame.Rect(26, 765, 700, 90), 'horizontal', (64, 64))
+        self.objects_on_the_screen['groupOfButtons'] = group_of_buttons
 
     def create_visual_board(self):
+        amount_of_sticks = self.size - 1
+        size_of_cell = (710 - amount_of_sticks * 20 - 10) // self.size
         for y in range(self.size):
             for x in range(self.size):
-                c = self.crosses_player
-                z = self.zeros_player
-                number_of_button = 3 * y + x
-                hitbox = pygame.Rect(112 + x * 131, 40 + y * 131, 122, 122)
+                crosses = self.crosses_player
+                zeros = self.zeros_player
+                number_of_button = self.size * y + x
+                hitbox = pygame.Rect(90 + x * (20 + size_of_cell), 25 +
+                                     y * (20 + size_of_cell), size_of_cell, size_of_cell)
                 if self.crosses_player == self.zeros_player == 1:
-                    self.create_button(str(number_of_button), self.number_printer, number_of_button, hitbox=hitbox,
-                                       default_texture=pygame.color.Color(255, 255, 224), hover_texture=pygame.color.Color((255, 255, 224)),
-                                       click_texture=pygame.color.Color(255, 255, 224))
+                    cell = ClicableCell(hitbox, self.number_printer, default_texture=pygame.color.Color(
+                        255, 255, 224), hover_texture=pygame.color.Color(255, 255, 224))
+                    self.objects_on_the_screen[number_of_button] = cell
                 else:
-                    self.create_button(str(number_of_button), self.make_move, number_of_button, c, z, hitbox=hitbox,
-                                       default_texture=pygame.color.Color(255, 255, 224), hover_texture=pygame.color.Color((255, 255, 224)),
-                                       click_texture=pygame.color.Color(255, 255, 224))
+                    cell = ClicableCell(hitbox, self.make_move, number_of_button, crosses, zeros, default_texture=pygame.color.Color(
+                        255, 255, 224), hover_texture=pygame.color.Color(255, 255, 224))
+                    self.objects_on_the_screen[number_of_button] = cell
                 self.visual_board.append(
-                    self.objects_on_the_screen[str(number_of_button)])
+                    self.objects_on_the_screen[number_of_button])
+
+    def create_sticks(self):
+        amount_of_sticks = self.size - 1
+        size_of_cell = (710 - amount_of_sticks * 20 - 10) // self.size
+        for i in range(1, self.size):
+            coords_vertical = (85 + size_of_cell * i + 10 *
+                               i + 10 * (i - 1), 20, 10, 710)
+            self.objects_on_the_screen[f"vert{
+                i}"] = pygame.Rect(coords_vertical)
+            coords_horizontal = (85, 20 + size_of_cell *
+                                 i + 10 * i + 10 * (i - 1), 710, 10)
+            self.objects_on_the_screen[f"hor{
+                i}"] = pygame.Rect(coords_horizontal)
 
 # -------------------------- Рэндер страницы с классической игрой -----------------
     def classic_game_render(self) -> None:
-        for i in range(self.size - 1):
-            pygame.draw.line(self.home_page.screen, (133, 116, 115),
-                             (368, 26), (368, 438), 6)  # правая
-            pygame.draw.line(self.home_page.screen, (133, 116, 115),
-                             (237, 26), (237, 438), 6)  # левая
-        pygame.draw.line(self.home_page.screen, (133, 116, 115),
-                         (97, 165), (509, 165), 6)  # верхняя
-        pygame.draw.line(self.home_page.screen, (133, 116, 115),
-                         (97, 296), (509, 296), 6)  # нижняя
         for name in self.objects_on_the_screen:
             if isinstance(self.objects_on_the_screen[name], Button):
-                self.render_button(self.objects_on_the_screen[name])
+                self.objects_on_the_screen[name].render(self.home_page.screen)
+            if isinstance(self.objects_on_the_screen[name], GroupObjectClass):
+                self.objects_on_the_screen[name].render(self.home_page.screen)
             if isinstance(self.objects_on_the_screen[name], pygame.Surface):
                 self.render_image(name)
-
-    def render_button(self, button_to_render: Button) -> None:
-        button_to_render.render(self.home_page.screen)
+            if isinstance(self.objects_on_the_screen[name], pygame.Rect):
+                pygame.draw.rect(self.home_page.screen, (133, 116, 115),
+                                 self.objects_on_the_screen[name], 0, 10)
+            else:
+                self.objects_on_the_screen[name].render(self.home_page.screen)
 
 # -------------------- ТРИГЕР ДЕЙСТВИЙ НА СТРАНИЦЕ--------------------------
-    def classic_game_processes(self) -> None:
+    def processes(self) -> None:
         if (self.crosses_player == 1) and (self.zeros_player == 1):
 
             if self.is_game_continue():
@@ -251,6 +293,10 @@ class ClassicGamePage():
         for event in pygame.event.get():
             for name in self.objects_on_the_screen:
                 if isinstance(self.objects_on_the_screen[name], Button):
+                    self.objects_on_the_screen[name].hover_click(event)
+                if isinstance(self.objects_on_the_screen[name], GroupObjectClass):
+                    self.objects_on_the_screen[name].hover_click(event)
+                if isinstance(self.objects_on_the_screen[name], ClicableCell):
                     self.objects_on_the_screen[name].hover_click(event)
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -295,10 +341,10 @@ class ClassicGamePage():
                     self.make_move(crosses_player=crosses_player,
                                    zeros_player=zeros_player)
                 if zeros_player == 1:
-                    computers_turn = self.computer.search_root(8)
+                    computers_turn = self.computer.search_root(3)
                     self.zeros_move(computers_turn)
                 if zeros_player == 2:
-                    computers_turn = self.Neiro.search_root(8)
+                    computers_turn = self.Neiro.search_root(3)
                     self.zeros_move(computers_turn)
         else:
             for Cell in self.visual_board:
@@ -323,7 +369,7 @@ class ClassicGamePage():
             self.visual_board[number].onClick = self.number_printer
 
     def is_game_continue(self):
-        winner = self.logic.has_game_ended()
+        winner = self.logic.check_win()
         if winner is None:
             return True
         else:
@@ -335,7 +381,6 @@ class ClassicGamePage():
             last_move = self.moves[-1]
             self.logic.unmake_move(last_move)
             last_cell = self.visual_board[last_move]
-            last_cell.click_texture = pygame.color.Color(255, 255, 224)
             last_cell.default_texture = pygame.color.Color(255, 255, 224)
             last_cell.hover_texture = pygame.color.Color(255, 255, 224)
             last_cell.onClick = self.make_move
@@ -364,7 +409,7 @@ class ClassicGamePage():
 
 
 def main():
-    start = HomePage(pygame.display.set_mode((1000, 1000)),
+    start = HomePage(pygame.display.set_mode((880, 880)),
                      crosses_player='Игрок', zeros_player='Комп')
     start.run()
 
