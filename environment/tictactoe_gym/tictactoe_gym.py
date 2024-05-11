@@ -11,16 +11,13 @@ from src.tictactoe import TicTacToeManager
 
 
 class TicTacToeEnv(gymnasium.Env):
-    metadata = {'render_modes': ['human']}
-
-    def __init__(self, size: int = 3, pieces_to_win: int = 3, depth: int = 5, render_mode='human'):
+    def __init__(self, size: int = 3, pieces_to_win: int = 3, depth: int = 5):
         self.depth = depth
         self.size = size
         self.manager: TicTacToeManager = TicTacToeManager(Board(size), pieces_to_win)
         self.adversary: Adversary = Adversary(self.manager)
         self.action_space: ActType = MoveSpace(self.manager.find_legal_moves())
-        self.observation_space: ObsType = gymnasium.spaces.Box(low=-1, high=1, shape=(self.size ** 2,), dtype=int)
-        self.render_mode = render_mode
+        self.observation_space: ObsType = gymnasium.spaces.Discrete(3 ** (size ** 2))
 
     def reset(self, seed: int | None = None, options: dict[str, Any] | None = None) -> tuple[ObsType, dict[str, Any]]:
         self.manager.reset_board()
@@ -29,48 +26,45 @@ class TicTacToeEnv(gymnasium.Env):
         first_move = self.adversary.search_root(self.depth)
         self.action_space.legal_moves.remove(first_move)
         self.manager.make_move(first_move)
-        self.render()
-        return np.array(self.manager.board.board), {}
+        return self.manager.board.get_uid(), {}
 
     def step(self, action: ActType) -> tuple[ObsType, SupportsFloat, bool, bool, dict[str, Any]]:
         """
         :param action: Клетка, куда ходит модель
         :return: (поле, оценка, победа(bool), False, информация о шаге)
         """
+        if action not in self.manager.find_legal_moves():
+            return self.manager.board.get_uid(), -10, False, False, {}
         self.manager.make_move(action)
         reward = self.manager.check_win()
-        self.render()
         if reward is not None:
-            return (np.array(self.manager.board.board), -reward,
+            return (self.manager.board.get_uid(), -reward,
                     True, False, {'step': action, 'win': True, 'reward': -reward})
         # Умный ход ботяры(глубина выбирается по тому, что вам нужно)
-        move = self.adversary.search_root(self.depth)
-        self.manager.make_move(move)
+        self.manager.make_move(self.adversary.search_root(self.depth))
         self.action_space.legal_moves = self.manager.find_legal_moves()
         reward = self.manager.check_win()
         terminated = True if reward is not None else False
-        self.render()
         if reward is None:
             reward = 0
-        return (np.array(self.manager.board.board), -reward, terminated, False,
+        return (self.manager.board.get_uid(), -reward, terminated, False,
                 {'step': action, 'win': terminated, 'reward': -reward})
 
-    def render(self) -> None:
-        match self.render_mode:
+    def render(self, mode='human') -> None:
+        match mode:
             case 'human':
                 display(self.manager.board.board, self.size)
-            case None:
-                pass
             case _:
-                raise TypeError(f'Mode "{self.render_mode}" is not supported.')
+                raise TypeError(f'Mode "{mode}" is not supported.')
 
     def close(self):
         return 0
 
 
-class MoveSpace(gymnasium.spaces.Discrete):
+class MoveSpace(gymnasium.spaces.Space):
     def __init__(self, legal_moves: list[int]):
-        super().__init__(n=len(legal_moves))
+        super().__init__()
+        self.n = len(legal_moves)
         self.legal_moves = legal_moves
 
     def sample(self, mask: Any | None = None) -> int:
@@ -90,4 +84,3 @@ def display(board: list[int], size: int = 3) -> None:
         for j in range(size):
             print(f'{board[i * size + j]: >2} ', end='')
         print()
-    print('----------')
