@@ -78,7 +78,8 @@ class TicTacToeManager(GameManager):
                     if not self._check_borders(next_cell, direction_vec):
                         break
 
-                    next_cell = cell + (direction_vec[0] + direction_vec[1] * size) * i
+                    next_cell = cell + \
+                        (direction_vec[0] + direction_vec[1] * size) * i
 
                     next_cell_content: int = self.board.board[next_cell]
 

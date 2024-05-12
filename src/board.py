@@ -22,7 +22,7 @@ class Board:
 
 class Clickable:
 
-    def __init__(self, hitbox: Rect, onClick: Callable, *args) -> None:
+    def __init__(self, hitbox: pygame.Rect, onClick: Callable, *args) -> None:
         """
         Clickable (property)
         :param onClick (callback function):
