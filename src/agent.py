@@ -1,11 +1,14 @@
 import os
 import pickle
 import random
-from collections import defaultdict
 
 import gymnasium as gym
 import numpy as np
+
+from collections import defaultdict
+
 from tqdm import tqdm
+from numpy import zeros
 
 
 class TicTacToeAgent:
@@ -104,4 +107,6 @@ class TicTacToeAgent:
     @staticmethod
     def load(path: os.PathLike | str):
         with open(path, 'rb') as f:
-            return pickle.load(f)
+            instance = pickle.load(f)
+            instance.q_values = defaultdict(instance.npzeros, instance.q_values)
+            return instance
