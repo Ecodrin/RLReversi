@@ -1,9 +1,9 @@
 import pygame
 import os
+import constants as const
 
 from gui_elements import Button, StylizedText, ClicableCell, GroupObjectClass, NumberField
 from typing import Callable, Any
-from constants import *
 
 from board import Board
 from tictactoe import TicTacToeManager
@@ -12,7 +12,7 @@ from manager import Adversary
 
 class HomePage:
 
-    def __init__(self,  screen: pygame.display, title: str = 'Tic-Tac-Toe', depth: int = 8, crosses_player: str = 'Игрок', zeros_player: str = "Комп") -> None:
+    def __init__(self,  screen: pygame.display, title: str = const.TITLE, depth: int = 8, crosses_player: int = 0, zeros_player: int = 1) -> None:
         """
         :param screen: Экран для отображения игры.
         :param title: Имя вкладки с игрой.
@@ -21,11 +21,10 @@ class HomePage:
         :param zeros_player: Кто играет за нолики.
         :return:
         """
-        players = {'Игрок': 0, "Комп": 1, 'Нейронка': 2}
-        self.crosses_player: int = players[crosses_player]
-        self.zeros_player: int = players[zeros_player]
+        self.crosses_player: int = crosses_player
+        self.zeros_player: int = zeros_player
         self.depth: int = depth
-        self.running: int = 1
+        self.running: int = True
         self.size = 0
         self.page: int = 0
         self.rendered_pages: list[Any] = []
@@ -43,7 +42,7 @@ class HomePage:
         self.rendered_pages.append(self)
         self.page_create()
         pygame.display.set_caption(self.title)
-        self.screen.fill(SCREEN_COLOR)
+        self.screen.fill(const.SCREEN_COLOR)
 
         while self.running:
             # Рэндер объектов в Зависимости от текущей страницы
@@ -66,8 +65,8 @@ class HomePage:
         Создаёт главную страницу с игрой
         :return:
         """
-        self.create_image(START_IMAGE_PATH)
-        self.create_user_size_button()
+        self.create_image(const.START_IMAGE_PATH)
+        self.create_generate_button()
         self.create_group_of_buttons()
 
     def create_game_page(self, size: int = 3, pieces_to_win: int = 3) -> None:
@@ -81,88 +80,60 @@ class HomePage:
             self, size=size, pieces_to_win=pieces_to_win, crosses_player=self.crosses_player, zeros_player=self.zeros_player)
         self.rendered_pages.append(classic_game_page)
 
-    # Создание объектов на главной странице
-    def create_button(self, function_on_click: Callable, *args,
-                      hitbox: pygame.Rect = BUTTON_DEFAULT_HITBOX, inner_text: str = BUTTON_DEFAULT_CONTENT,
-                      default_texture=BUTTON_DEFAULT_DEFAULT_TEXTURE, hover_texture=BUTTON_DEFAULT_HOVER_TEXTURE,
-                      click_texture=BUTTON_DEFAULT_CLICK_TEXTURE, border_radius: int = BUTTON_DEFAULT_BOARDER_RADIUS) -> None:
-        """
-        Создаёт кнопку по исходным данным
-        :param function_on_click (callback function):
-        :param args (arguments for callback function):
-        :param hitbox (rectangular):
-        :param inner_text: str = 'NO TEKST'
-        :param text_colour: Цвет.
-        :param font_family: Шрифт текста.
-        :param font_size: Размер текста.
-        :param font_style: Стиль текста. Задаётся битовой маской: 0b001 - жирный, 0b010 - курсив, 0b100 - подчёркивание.
-        :param default_texture: Стандартная текстура кнопки.
-        :param hover_texture: Текстура при наведении курсора.
-        :param click_texture: Текстура при клике.
-        :param border_radius: Радиус округления.
-        :return:
-        """
-        text = StylizedText(hitbox, inner_text)
-        button = Button(function_on_click, *args, hitbox=hitbox, inner_text=text,
-                        default_texture=default_texture, hover_texture=hover_texture,
-                        click_texture=click_texture, border_radius=border_radius)
-        return button
-
     def create_group_of_buttons(self) -> None:
         """
         Создание группы кнопок на начальной странице  и добавление их в словарь со всеми объектами
         :return:
         """
         buttons = []
-        buttons.append(self.create_button(self.open_game_page,
-                       hitbox=BUTTON_THREE_HITBOX, inner_text=BUTTON_THREE_CONTENT))
-        buttons.append(self.create_button(self.open_game_page, 4, 3,
-                       hitbox=BUTTON_FOUR_HITBOX, inner_text=BUTTON_FOUR_CONTENT))
+        buttons.append(Button(self.open_game_page, hitbox=const.BUTTON_THREE_HITBOX,
+                       inner_text=const.BUTTON_THREE_CONTENT, default_texture=const.BUTTON_DEFAULT_DEFAULT_TEXTURE, hover_texture=const.BUTTON_DEFAULT_HOVER_TEXTURE,
+                       click_texture=const.BUTTON_DEFAULT_CLICK_TEXTURE, border_radius=const.BUTTON_BACK_BOARDER_RADIUS))
+        buttons.append(Button(self.open_game_page, 4, 3, hitbox=const.BUTTON_FOUR_HITBOX,
+                              inner_text=const.BUTTON_FOUR_CONTENT, default_texture=const.BUTTON_DEFAULT_DEFAULT_TEXTURE, hover_texture=const.BUTTON_DEFAULT_HOVER_TEXTURE,
+                              click_texture=const.BUTTON_DEFAULT_CLICK_TEXTURE, border_radius=const.BUTTON_BACK_BOARDER_RADIUS))
         group_of_buttons = GroupObjectClass(
-            buttons, START_GROUP_OF_BUTTONS_HITBOX, 'vertical', START_GROUP_OF_BUTTONS_MARGINS)
+            buttons, const.START_GROUP_OF_BUTTONS_HITBOX, 'vertical', const.START_GROUP_OF_BUTTONS_MARGINS)
         self.objects_on_the_screen.append(group_of_buttons)
 
-    def create_image(self, file_with_image: str) -> None:
+    def create_image(self, image_path: os.PathLike) -> None:
         """
         :param name: Название объекта
-        :param file_with_image: Путь до файла с изображением
-        :param coords_of_image: координаты изображения
+        :param image_path: Путь до файла с изображением
         :return:
         """
-        self.objects_on_the_screen.append(pygame.image.load(file_with_image))
+        self.objects_on_the_screen.append(pygame.image.load(image_path))
 
-    def create_user_size_button(self) -> None:
+    def create_generate_button(self) -> None:
         """
         Создание кнопки и текстовых полей для генерации поля пользователем
         :return:
         """
-        size_text = StylizedText(SIZE_TEXT_HITBOX, SIZE_TEXT_CONTENT,
-                                 SIZE_TEXT_COLOR, SIZE_TEXT_FONT_FAMILY, SIZE_TEXT_FONT_SIZE)
-        win_text = StylizedText(WIN_TEXT_HITBOX, WIN_TEXT_CONTENT,
-                                WIN_TEXT_COLOR, WIN_TEXT_FONT_FAMILY, WIN_TEXT_FONT_SIZE)
-        size_block = NumberField(SIZE_BLOCK_HITBOX, background_text=size_text,
-                                 background_texture=SCREEN_COLOR)
-        win_block = NumberField(WIN_BLOCK_HITBOX, background_text=win_text,
-                                background_texture=SCREEN_COLOR)
+        size_text = StylizedText(const.NUMBERFIELD_FOR_SIZE_HITBOX, const.NUMBERFIELD_FOR_SIZE_CONTENT,
+                                 const.NUMBERFIELD_FOR_SIZE_COLOR, const.NUMBERFIELD_FOR_SIZE_FONT_FAMILY, const.NUMBERFIELD_FOR_SIZE_FONT_SIZE)
+        win_text = StylizedText(const.NUMBERFIELD_FOR_WIN_HITBOX, const.NUMBERFIELD_FOR_WIN_CONTENT,
+                                const.NUMBERFIELD_FOR_WIN_COLOR, const.NUMBERFIELD_FOR_WIN_FONT_FAMILY, const.NUMBERFIELD_FOR_WIN_FONT_SIZE)
+        size_block = NumberField(const.SIZE_BLOCK_HITBOX, background_text=size_text,
+                                 background_texture=const.SCREEN_COLOR)
+        win_block = NumberField(const.WIN_BLOCK_HITBOX, background_text=win_text,
+                                background_texture=const.SCREEN_COLOR)
         self.objects_on_the_screen.append(size_block)
         self.objects_on_the_screen.append(win_block)
-        generate_button = self.create_button(self.user_game, size_block, win_block, hitbox=BUTTON_GENERATE_HITBOX,
-                                             inner_text=BUTTON_GENERATE_CONTENT, default_texture=BUTTON_GENERATE_DEFAULT_TEXTURE,
-                                             hover_texture=BUTTON_GENERATE_HOVER_TEXTURE, click_texture=BUTTON_GENERATE_CLICK_TEXTURE)
+        generate_button = Button(self.user_game, size_block, win_block, hitbox=const.BUTTON_GENERATE_HITBOX,
+                                 inner_text=const.BUTTON_GENERATE_CONTENT, default_texture=const.BUTTON_GENERATE_DEFAULT_TEXTURE,
+                                 hover_texture=const.BUTTON_GENERATE_HOVER_TEXTURE, click_texture=const.BUTTON_GENERATE_CLICK_TEXTURE)
         self.objects_on_the_screen.append(generate_button)
-        # size_text = NumberField(pygame.Rect(342, 680, 100, 90), 'size')
-        # win_text = NumberField(pygame.Rect(442, 680, 100, 90), 'win')
 
 # ------------------------РЭНДЕР-----------------------------------------------------
     def render(self) -> None:
         """
         Oтображение главной страницы.
-        :return:
+        :return: None
         """
         for object in self.objects_on_the_screen:
             if isinstance(object, pygame.Surface):
                 self.screen.blit(
-                    object, START_IMAGE_COORDS)
+                    object, const.START_IMAGE_COORDS)
             else:
                 object.render(self.screen)
 
@@ -178,10 +149,10 @@ class HomePage:
                     object.hover_click(event)
             if event.type == pygame.QUIT:
                 pygame.quit()
-                self.running = 0
+                self.running = False
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 pygame.quit()
-                self.running = 0
+                self.running = False
 
     def open_game_page(self, size: int = 3, pieces_to_win: int = 3) -> None:
         """
@@ -190,15 +161,14 @@ class HomePage:
         :param pieces_to_win: Колличество ячеек в ряд для победы
         :return:
         """
-        print(size)
-        self.screen.fill(SCREEN_COLOR)
-        index = -1
-        for i in self.rendered_pages:
-            index += 1
-            if i.size == size and i.pieceses_to_win == pieces_to_win:
-                self.page = index
+        self.screen.fill(const.SCREEN_COLOR)
+        index_of_page = -1
+        for page in self.rendered_pages:
+            index_of_page += 1
+            if page.size == size and page.pieceses_to_win == pieces_to_win:
+                self.page = index_of_page
                 if self.crosses_player == 1 and self.zeros_player == 0:
-                    self.rendered_pages[index].make_move(
+                    self.rendered_pages[index_of_page].make_move(
                         crosses_player=1, zeros_player=0)
                 break
         else:
@@ -233,8 +203,8 @@ class GamePage():
         """
         self.crosses_player: int = crosses_player
         self.zeros_player: int = zeros_player
-        self.zero_texture: os.PathLike = ZEROS_TEXTURE
-        self.cross_texture: os.PathLike = CROSSES_TEXTURE
+        self.zero_texture: os.PathLike = const.ZEROS_TEXTURE
+        self.cross_texture: os.PathLike = const.CROSSES_TEXTURE
         self.moves: list[int] = []
         self.size: int = size
         if pieces_to_win == 0:
@@ -259,49 +229,22 @@ class GamePage():
         self.create_visual_board()
         self.create_sticks()
         self.create_buttons()
-    # Создание кнопки
-
-    def create_button(self, function_on_click: Callable, *args,
-                      hitbox: pygame.Rect = BUTTON_DEFAULT_HITBOX, inner_text: str = BUTTON_DEFAULT_CONTENT,
-                      default_texture=BUTTON_DEFAULT_DEFAULT_TEXTURE, hover_texture=BUTTON_DEFAULT_HOVER_TEXTURE,
-                      click_texture=BUTTON_DEFAULT_CLICK_TEXTURE, border_radius: int = BUTTON_DEFAULT_BOARDER_RADIUS) -> None:
-        """
-        Создаёт кнопку по исходным данным
-        :param function_on_click (callback function):
-        :param args (arguments for callback function):
-        :param hitbox (rectangular):
-        :param inner_text: str = 'NO TEKST'
-        :param text_colour: Цвет.
-        :param font_family: Шрифт текста.
-        :param font_size: Размер текста.
-        :param font_style: Стиль текста. Задаётся битовой маской: 0b001 - жирный, 0b010 - курсив, 0b100 - подчёркивание.
-        :param default_texture: Стандартная текстура кнопки.
-        :param hover_texture: Текстура при наведении курсора.
-        :param click_texture: Текстура при клике.
-        :param border_radius: Радиус округления.
-        :return:
-        """
-        text = StylizedText(hitbox, inner_text)
-        button = Button(function_on_click, *args, hitbox=hitbox, inner_text=text,
-                        default_texture=default_texture, hover_texture=hover_texture,
-                        click_texture=click_texture, border_radius=border_radius)
-        return button
 
     def create_buttons(self) -> None:
         """
-        Создаёт кнопки для рестарта игры, взятие хода назад, и возвращения на главную страницу
+        Создаёт кнопки для рестарта игры, взятия хода назад, и возвращения на главную страницу
         :return:
         """
         buttons = []
-        buttons.append(self.create_button(self.open_home_page, hitbox=BUTTON_BACK_HITBOX, inner_text=BUTTON_BACK_CONTENT, default_texture=BUTTON_BACK_DEFAULT_TEXTURE,
-                       hover_texture=BUTTON_BACK_HOVER_TEXTURE, click_texture=BUTTON_BACK_CLICK_TEXTURE, border_radius=BUTTON_BACK_BOARDER_RADIUS))
-        buttons.append(self.create_button(self.restart_game, hitbox=BUTTON_RESET_HITBOX, inner_text=BUTTON_RESET_CONTENT, default_texture=BUTTON_RESET_DEFAULT_TEXTURE,
-                                          hover_texture=BUTTON_RESET_HOVER_TEXTURE, click_texture=BUTTON_RESET_CLICK_TEXTURE, border_radius=BUTTON_RESET_BOARDER_RADIUS))
-        buttons.append(self.create_button(self.move_back, hitbox=BUTTON_UNDO_HITBOX,
-                                          inner_text=BUTTON_UNDO_CONTENT, default_texture=BUTTON_UNDO_DEFAULT_TEXTURE,
-                                          hover_texture=BUTTON_UNDO_HOVER_TEXTURE, click_texture=BUTTON_UNDO_CLICK_TEXTURE, border_radius=BUTTON_BACK_BOARDER_RADIUS))
+        buttons.append(Button(self.open_home_page, hitbox=const.BUTTON_BACK_HITBOX, inner_text=const.BUTTON_BACK_CONTENT, default_texture=const.BUTTON_BACK_DEFAULT_TEXTURE,
+                       hover_texture=const.BUTTON_BACK_HOVER_TEXTURE, click_texture=const.BUTTON_BACK_CLICK_TEXTURE, border_radius=const.BUTTON_BACK_BOARDER_RADIUS))
+        buttons.append(Button(self.restart_game, hitbox=const.BUTTON_RESET_HITBOX, inner_text=const.BUTTON_RESET_CONTENT, default_texture=const.BUTTON_RESET_DEFAULT_TEXTURE,
+                              hover_texture=const.BUTTON_RESET_HOVER_TEXTURE, click_texture=const.BUTTON_RESET_CLICK_TEXTURE, border_radius=const.BUTTON_RESET_BOARDER_RADIUS))
+        buttons.append(Button(self.move_back, hitbox=const.BUTTON_UNDO_HITBOX,
+                              inner_text=const.BUTTON_UNDO_CONTENT, default_texture=const.BUTTON_UNDO_DEFAULT_TEXTURE,
+                              hover_texture=const.BUTTON_UNDO_HOVER_TEXTURE, click_texture=const.BUTTON_UNDO_CLICK_TEXTURE, border_radius=const.BUTTON_BACK_BOARDER_RADIUS))
         group_of_buttons = GroupObjectClass(
-            buttons, GAME_GROUP_OF_BUTTONS_HITBOX, 'horizontal', GAME_GROUP_OF_BUTTONS_MARGINS)
+            buttons, const.GAME_GROUP_OF_BUTTONS_HITBOX, 'horizontal', const.GAME_GROUP_OF_BUTTONS_MARGINS)
         self.objects_on_the_screen['groupOfButtons'] = group_of_buttons
 
     def create_visual_board(self) -> None:
@@ -309,23 +252,24 @@ class GamePage():
         Создаёт игровое поле нужных размеров
         :return:
         """
-        amount_of_sticks = self.size - 1
-        size_of_cell = (710 - amount_of_sticks * 20 - 10) // self.size
+        n_sticks = self.size - 1
+        size_of_cell = (710 - n_sticks * 20 - 10) // self.size
         for y in range(self.size):
             for x in range(self.size):
                 crosses = self.crosses_player
                 zeros = self.zeros_player
                 number_of_button = self.size * y + x
                 hitbox = pygame.Rect(90 + x * (20 + size_of_cell), 25 +
+                                     # Числа предназначены для конкретного расположения по центру поля
                                      y * (20 + size_of_cell), size_of_cell, size_of_cell)
-                if self.crosses_player == self.zeros_player == 1:
-                    cell = ClicableCell(hitbox, self.number_printer, default_texture=pygame.color.Color(
-                        SCREEN_COLOR), hover_texture=SCREEN_COLOR)
-                    self.objects_on_the_screen[number_of_button] = cell
+                if self.crosses_player == self.zeros_player == 1:                           # 90 - отступ слева
+                    not_cell = ClicableCell(hitbox, self.print_number, default_texture=pygame.color.Color(  # 10 - размер палочки + 5 пикселей отступы между клеткой и панками
+                        const.SCREEN_COLOR), hover_texture=const.SCREEN_COLOR)
+                    self.objects_on_the_screen[number_of_button] = not_cell
                 else:
-                    cell = ClicableCell(hitbox, self.make_move, number_of_button, crosses, zeros, default_texture=pygame.color.Color(
-                        SCREEN_COLOR), hover_texture=SCREEN_COLOR)
-                    self.objects_on_the_screen[number_of_button] = cell
+                    not_cell = ClicableCell(hitbox, self.make_move, number_of_button, crosses, zeros, default_texture=pygame.color.Color(
+                        const.SCREEN_COLOR), hover_texture=const.SCREEN_COLOR)
+                    self.objects_on_the_screen[number_of_button] = not_cell
                 self.visual_board.append(
                     self.objects_on_the_screen[number_of_button])
 
@@ -334,14 +278,17 @@ class GamePage():
         Создаёт решетку поля.
         :return:
         """
-        amount_of_sticks = self.size - 1
-        size_of_cell = (710 - amount_of_sticks * 20 - 10) // self.size
+        n_sticks = self.size - 1
+        # числа нужны для корректной отцентровки
+        size_of_cell = (710 - n_sticks * 20 - 10) // self.size
+        # 710 - размер всего поля - 20 отступы между палками и клетками, суммарные отступы по краям
         for i in range(1, self.size):
-            coords_vertical = (85 + size_of_cell * i + 10 *
+            coords_vertical = (85 + size_of_cell * i + 10 *  # 85 - отступ слева 10 * i отступ в зависимости от колличества клеток слева, 10 * (i - 1) - отступ в зависимости от кол-ва палок слева
+                               # 20 координата по y, 10 - нирина палки, 710 - высота палка
                                i + 10 * (i - 1), 20, 10, 710)
             self.objects_on_the_screen[f"vert{
                 i}"] = pygame.Rect(coords_vertical)
-            coords_horizontal = (85, 20 + size_of_cell *
+            coords_horizontal = (85, 20 + size_of_cell *  # 85 - отступ слева, 10 * i отступ в зависимости от колличества клеток сыерху, 10 * (i - 1) - отступ в зависимости от кол-ва палок сверху
                                  i + 10 * i + 10 * (i - 1), 710, 10)
             self.objects_on_the_screen[f"hor{
                 i}"] = pygame.Rect(coords_horizontal)
@@ -365,7 +312,7 @@ class GamePage():
         Обработка действий  над объектами на странице
         :return:
         """
-        if (self.crosses_player == 1 == self.zeros_player) and self.is_game_continue():
+        if self.crosses_player == 1 == self.zeros_player and self.is_game_continue():
             self.make_move()
         for event in pygame.event.get():
             for object in self.objects_on_the_screen.values():
@@ -373,11 +320,11 @@ class GamePage():
                     object.hover_click(event)
             if event.type == pygame.QUIT:
                 pygame.quit()
-                self.home_page.running = 0
+                self.home_page.running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit()
-                    self.home_page.running = 0
+                    self.home_page.running = False
 
 # ----------------------- РАБОТА С ДЕЙСТВИЯМИ НА СТРАНИЦЕ ----------------------
     def is_move_available(self, number: int) -> bool:
@@ -391,6 +338,46 @@ class GamePage():
             return number in self.logic.find_legal_moves()
         return False
 
+    def zeros_move(self, number: int) -> None:
+        """
+        Делает ход ноликов в нужную клетку, если это возможно.
+        :param number: номер клетки
+        :return:
+        """
+        if self.is_move_available(number):
+            self.logic.make_move(number)
+            self.moves.append(number)
+            self.visual_board[number].default_texture = self.zero_texture
+            self.visual_board[number].hover_texture = self.zero_texture
+            self.visual_board[number].click_texture = self.zero_texture
+            self.visual_board[number].onClick = self.print_number
+
+    def move_back(self) -> None:
+        """
+        Делает ход назад, если это возможно.
+        :return:
+        """
+        if (len(self.moves) > 0 and not (self.crosses_player == 1 and self.zeros_player == 0)) or self.crosses_player == 1 and self.zeros_player == 0 and len(self.moves) > 1:
+            last_move = self.moves[-1]
+            self.logic.unmake_move(last_move)
+            last_cell = self.visual_board[last_move]
+            last_cell.default_texture = const.SCREEN_COLOR
+            last_cell.hover_texture = const.SCREEN_COLOR
+            last_cell.onClick = self.make_move
+            self.moves.remove(last_move)
+
+    def is_game_continue(self) -> bool:
+        """
+        Проверяет продолжается игра или завершен.
+        :return: bool
+        """
+        winner = self.logic.check_win()
+        if winner is None:
+            return True
+        else:
+            # text = ['Ничья', "Крестики", "Нолики"] Для будущего
+            return False
+
     def make_move(self, number: int = -1, crosses_player: int = 1, zeros_player=1) -> None:
         """
         Делает ход в нужную клетку. Также в случае если игра закончилась, не дает возможности делать ходы
@@ -398,16 +385,16 @@ class GamePage():
         """
         if not self.is_game_continue():  # Если игра закончилась, то ход делать не надо
             for сell in self.visual_board:
-                сell.onClick = self.number_printer
-        elif (len(self.moves) % 2 != 0):  # Если ход ноликов
+                сell.onClick = self.print_number
+        elif len(self.moves) % 2:  # Если ход ноликов
             match zeros_player:  # Определение того, кто играет за ноликов
                 case 0:
                     self.zeros_move(number)
                 case 1:
-                    computers_turn = self.computer.search_root(3)
+                    computers_turn = self.computer.search_root(const.DEPTH)
                     self.zeros_move(computers_turn)
                 case 2:
-                    computers_turn = self.computer.search_root(3)
+                    computers_turn = self.computer.search_root(const.DEPTH)
                     self.zeros_move(computers_turn)
             if crosses_player == 1:  # если противник компъютер, то вызываем его ход
                 self.make_move(crosses_player=crosses_player,
@@ -417,10 +404,10 @@ class GamePage():
                 case 0:
                     self.crosses_move(number)
                 case 1:
-                    computers_turn = self.computer.search_root(3)
+                    computers_turn = self.computer.search_root(const.DEPTH)
                     self.crosses_move(computers_turn)
                 case 2:
-                    computers_turn = self.computer.search_root(3)
+                    computers_turn = self.computer.search_root(const.DEPTH)
                     self.crosses_move(computers_turn)
             if zeros_player == 1:  # если противник компъютер, то вызываем его ход
                 self.make_move(crosses_player=crosses_player,
@@ -438,55 +425,7 @@ class GamePage():
             self.visual_board[number].default_texture = self.cross_texture
             self.visual_board[number].hover_texture = self.cross_texture
             self.visual_board[number].click_texture = self.cross_texture
-            self.visual_board[number].onClick = self.number_printer
-
-    def zeros_move(self, number: int) -> None:
-        """
-        Делает ход ноликов в нужную клетку, если это возможно.
-        :param number: номер клетки
-        :return:
-        """
-        if self.is_move_available(number):
-            self.logic.make_move(number)
-            self.moves.append(number)
-            self.visual_board[number].default_texture = self.zero_texture
-            self.visual_board[number].hover_texture = self.zero_texture
-            self.visual_board[number].click_texture = self.zero_texture
-            self.visual_board[number].onClick = self.number_printer
-
-    def is_game_continue(self) -> bool:
-        """
-        Проверяет продолжается игра или завершен.
-        :return: bool
-        """
-        winner = self.logic.check_win()
-        if winner is None:
-            return True
-        else:
-            text = ['Ничья', "Крестики", "Нолики"]
-            return False
-
-    def move_back(self) -> None:
-        """
-        Делает ход назад, если это возможно.
-        :return:
-        """
-        if len(self.moves) > 0 and not (self.crosses_player == 1 and self.zeros_player == 0):
-            last_move = self.moves[-1]
-            self.logic.unmake_move(last_move)
-            last_cell = self.visual_board[last_move]
-            last_cell.default_texture = SCREEN_COLOR
-            last_cell.hover_texture = SCREEN_COLOR
-            last_cell.onClick = self.make_move
-            self.moves.remove(last_move)
-        elif (self.crosses_player == 1 and self.zeros_player == 0) and len(self.moves) > 1:
-            last_move = self.moves[-1]
-            self.logic.unmake_move(last_move)
-            last_cell = self.visual_board[last_move]
-            last_cell.default_texture = SCREEN_COLOR
-            last_cell.hover_texture = SCREEN_COLOR
-            last_cell.onClick = self.make_move
-            self.moves.remove(last_move)
+            self.visual_board[number].onClick = self.print_number
 
     def restart_game(self) -> None:
         """
@@ -495,9 +434,9 @@ class GamePage():
         """
         self.logic.reset_board()
         for сell in self.visual_board:
-            сell.click_texture = SCREEN_COLOR
-            сell.default_texture = SCREEN_COLOR
-            сell.hover_texture = SCREEN_COLOR
+            сell.click_texture = const.SCREEN_COLOR
+            сell.default_texture = const.SCREEN_COLOR
+            сell.hover_texture = const.SCREEN_COLOR
             сell.onClick = self.make_move
         self.moves = []
         if self.crosses_player == 1 and self.zeros_player == 0:
@@ -510,16 +449,16 @@ class GamePage():
         """
         self.logic.reset_board()
         for сell in self.visual_board:
-            сell.click_texture = SCREEN_COLOR
-            сell.default_texture = SCREEN_COLOR
-            сell.hover_texture = SCREEN_COLOR
+            сell.click_texture = const.SCREEN_COLOR
+            сell.default_texture = const.SCREEN_COLOR
+            сell.hover_texture = const.SCREEN_COLOR
             сell.onClick = self.make_move
         self.moves = []
         self.render()
-        self.home_page.screen.fill(SCREEN_COLOR)
+        self.home_page.screen.fill(const.SCREEN_COLOR)
         self.home_page.page = 0
 
-    def number_printer(self, *args) -> None:
+    def print_number(self, *args) -> None:
         """
         Функция, без действий, бедет применяться при обучении.
         :return:
@@ -529,7 +468,7 @@ class GamePage():
 
 def main():
     start = HomePage(pygame.display.set_mode((880, 880)),
-                     crosses_player='Комп', zeros_player='Игрок')
+                     crosses_player=0, zeros_player=1)
     start.run()
 
 

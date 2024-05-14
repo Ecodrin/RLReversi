@@ -6,7 +6,6 @@ from pygame.locals import Rect
 
 from gui_utility import center_relative_to
 from board import Clickable
-from constants import *
 
 
 class StylizedText:
@@ -197,6 +196,14 @@ class ClicableCell(Clickable):
         else:
             raise TypeError('Invalid texture type')
 
+    def __repr__(self):
+        return f"ClicableCell(hitbox={self.hitbox},\n" \
+            f"default_texture={self.default_texture}, hover_texture={
+                self.hover_texture}"
+
+    def __str__(self) -> str:
+        return f"ClicableCell with hitbox: {self.hitbox}"
+
 
 class Button(Clickable):
 
@@ -221,9 +228,9 @@ class Button(Clickable):
         """
 
         super().__init__(hitbox, onClick, *args)
+        self.inner_text: StylizedText | str = inner_text
         if isinstance(inner_text, str):
             self.inner_text = StylizedText(position=hitbox, content=inner_text)
-        self.inner_text: StylizedText | str = inner_text
         self.default_texture: pygame.color.Color | os.PathLike = default_texture
         self.hover_texture: pygame.color.Color | os.PathLike = hover_texture
         self.click_texture: pygame.color.Color | os.PathLike = click_texture
@@ -445,14 +452,14 @@ class GroupObjectClass:
 
 class NumberField:
 
-    def __init__(self, hitbox: pygame.Rect = pygame.Rect(300, 200, 200, 50), background_text: StylizedText | str = 'ty',
-                 background_texture: pygame.color.Color | os.PathLike = pygame.color.Color(105, 103, 209), maksimum_value: int = 15):
+    def __init__(self, hitbox: pygame.Rect = pygame.Rect(300, 200, 200, 50), background_text: StylizedText | str = 'input',
+                 background_texture: pygame.color.Color | os.PathLike = pygame.color.Color(105, 103, 209), max_value: int = 15):
         """
         Класс для блока с вводом цифр
         :param hitbox: хитбокс блока с текстом
         :param background_text: текст на блоке по-умолчанию
         :param background_texture: задний фон
-        :param maksimum_value: максимальное значение, которое может быть в клетке
+        :param max_value: максимальное значение, которое может быть в клетке
         """
         self.hitbox: pygame.Rect = hitbox
         self.background_texture: pygame.color.Color | os.PathLike = background_texture
@@ -465,9 +472,8 @@ class NumberField:
             self.background_text: StylizedText = background_text
             self.text: StylizedText = StylizedText(self.hitbox, background_text.content, background_text.text_colour,
                                                    background_text.font_family, background_text.font_size, background_text.font_style)
-        self.maksimum_value: int = maksimum_value
+        self.max_value: int = max_value
         self._image_cache: pygame.SurfaceType = pygame.Surface((800, 600))
-        self.active: bool = False
         self.correct_text: bool = False
         self.click_field: bool = False
 
@@ -500,27 +506,35 @@ class NumberField:
         """
         Обработка действий над текстом
         """
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            # Если кликнули на блок, то помечаем это
-            if self.hitbox.collidepoint(event.pos):
-                self.active = True
-                if self.text.content == self.background_text.content:  # Убираем фоновый текст, если он там был
+        match event.type:
+            case pygame.MOUSEBUTTONDOWN:
+                # Если кликнули на блок, то помечаем это
+                if self.hitbox.collidepoint(event.pos) and self.text.content == self.background_text.content:
+                    self.click_field = True
                     self.text.content = ''
                     self.correct_text = False
-            elif self.active and self.text.content == '':
-                self.active = False
-                self.text.content = self.background_text.content
-        elif event.type == pygame.KEYDOWN:
-            if self.active:
-                if event.key == pygame.K_BACKSPACE:
-                    if not self.text.content == self.background_text.content:
-                        self.text.content = self.text.content[:-1]
-                    if self.text.content == '':
-                        self.text.content = self.background_text.content
-                        self.correct_text = False
-                elif event.unicode.isdigit() and self.text.content != self.background_text.content:
-                    if not self.correct_text and event.unicode != '0':
+                elif self.hitbox.collidepoint(event.pos):
+                    self.click_field = True
+                elif self.click_field and self.text.content == '':
+                    self.click_field = False
+                    self.text.content = self.background_text.content
+                else:
+                    self.click_field = False
+            case pygame.KEYDOWN:
+                if self.click_field and event.key == pygame.K_BACKSPACE and self.text.content == '':
+                    self.text.content = self.background_text.content
+                    self.correct_text = False
+                elif self.click_field and event.key == pygame.K_BACKSPACE and not self.text.content == self.background_text.content:
+                    self.text.content = self.text.content[:-1]
+                elif self.click_field and event.unicode.isdigit() and self.text.content != self.background_text.content:
+                    if not self.correct_text and event.unicode:
                         self.text.content += event.unicode
                         self.correct_text = True
-                    elif int(self.text.content + event.unicode) <= self.maksimum_value:
+                    elif int(self.text.content + event.unicode) <= self.max_value:
                         self.text.content += event.unicode
+
+    def __str__(self) -> str:
+        return f"NumberField with background_text '{self.background_text}' and hitbox {self.hitbox}"
+
+    def __repr__(self) -> str:
+        return f'NumberFieldClass: hitbox: {self.hitbox}\nbackground_text: {self.background_text}'
