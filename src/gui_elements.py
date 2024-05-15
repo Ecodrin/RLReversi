@@ -474,8 +474,8 @@ class NumberField:
                                                    background_text.font_family, background_text.font_size, background_text.font_style)
         self.max_value: int = max_value
         self._image_cache: pygame.SurfaceType = pygame.Surface((800, 600))
-        self.correct_text: bool = False
-        self.click_field: bool = False
+        self.is_text_correct: bool = False
+        self.is_click_field: bool = False
 
     def render(self, screen: pygame.display):
         """
@@ -510,26 +510,26 @@ class NumberField:
             case pygame.MOUSEBUTTONDOWN:
                 # Если кликнули на блок, то помечаем это
                 if self.hitbox.collidepoint(event.pos) and self.text.content == self.background_text.content:
-                    self.click_field = True
+                    self.is_click_field = True
                     self.text.content = ''
-                    self.correct_text = False
+                    self.is_text_correct = False
                 elif self.hitbox.collidepoint(event.pos):
-                    self.click_field = True
-                elif self.click_field and self.text.content == '':
-                    self.click_field = False
+                    self.is_click_field = True
+                elif self.is_click_field and self.text.content == '':
+                    self.is_click_field = False
                     self.text.content = self.background_text.content
                 else:
-                    self.click_field = False
+                    self.is_click_field = False
             case pygame.KEYDOWN:
-                if self.click_field and event.key == pygame.K_BACKSPACE and self.text.content == '':
+                if self.is_click_field and event.key == pygame.K_BACKSPACE and self.text.content == '':
                     self.text.content = self.background_text.content
-                    self.correct_text = False
-                elif self.click_field and event.key == pygame.K_BACKSPACE and not self.text.content == self.background_text.content:
+                    self.is_text_correct = False
+                elif self.is_click_field and event.key == pygame.K_BACKSPACE and not self.text.content == self.background_text.content:
                     self.text.content = self.text.content[:-1]
-                elif self.click_field and event.unicode.isdigit() and self.text.content != self.background_text.content:
-                    if not self.correct_text and event.unicode:
+                elif self.is_click_field and event.unicode.isdigit() and self.text.content != self.background_text.content:
+                    if not self.is_text_correct and event.unicode:
                         self.text.content += event.unicode
-                        self.correct_text = True
+                        self.is_text_correct = True
                     elif int(self.text.content + event.unicode) <= self.max_value:
                         self.text.content += event.unicode
 

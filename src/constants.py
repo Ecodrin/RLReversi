@@ -1,5 +1,5 @@
-import pygame
 import pathlib
+import pygame
 
 SCREEN_COLOR = pygame.color.Color(255, 255, 224)
 
@@ -28,6 +28,7 @@ BUTTON_GENERATE_CONTENT = 'Сгенерировать'
 BUTTON_GENERATE_DEFAULT_TEXTURE = pygame.color.Color((105, 103, 209))
 BUTTON_GENERATE_HOVER_TEXTURE = pygame.color.Color(103, 145, 209)
 BUTTON_GENERATE_CLICK_TEXTURE = pygame.color.Color((103, 171, 209))
+BUTTON_GENERATE_BOARDER_RADIUS = 32
 
 BUTTON_BACK_HITBOX = pygame.Rect((65, 474, 190, 90))
 BUTTON_BACK_CONTENT = 'Back'
@@ -74,6 +75,7 @@ WIN_BLOCK_HITBOX = pygame.Rect(442, 665, 200, 90)
 
 ZEROS_TEXTURE = pathlib.Path("Frame 4.png")
 CROSSES_TEXTURE = pathlib.Path("Union.png")
+STICKS_COLOR = pygame.color.Color(133, 116, 115)
 
 DEPTH = 6
 TITLE = 'Tic-Tac-Toe'

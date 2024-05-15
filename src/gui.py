@@ -1,10 +1,10 @@
-import pygame
 import os
-import constants as const
+
+import pygame
 
 from gui_elements import Button, StylizedText, ClicableCell, GroupObjectClass, NumberField
 from typing import Callable, Any
-
+import constants as const
 from board import Board
 from tictactoe import TicTacToeManager
 from manager import Adversary
@@ -12,7 +12,7 @@ from manager import Adversary
 
 class HomePage:
 
-    def __init__(self,  screen: pygame.display, title: str = const.TITLE, depth: int = 8, crosses_player: int = 0, zeros_player: int = 1) -> None:
+    def __init__(self,  screen: pygame.display, title: str = const.TITLE, crosses_player: int = 0, zeros_player: int = 1) -> None:
         """
         :param screen: Экран для отображения игры.
         :param title: Имя вкладки с игрой.
@@ -23,7 +23,6 @@ class HomePage:
         """
         self.crosses_player: int = crosses_player
         self.zeros_player: int = zeros_player
-        self.depth: int = depth
         self.running: int = True
         self.size = 0
         self.page: int = 0
@@ -34,7 +33,7 @@ class HomePage:
 
     def run(self) -> None:
         """
-        Функция, отвечающая за визуализацию Страниц игры.
+        Функция, отвечающая за визуализацию cтраниц игры.
         Разделена на 2 части - создание объектов, их рэндер и обработка действий.
         :return:
         """
@@ -71,9 +70,9 @@ class HomePage:
 
     def create_game_page(self, size: int = 3, pieces_to_win: int = 3) -> None:
         """
-        Создаёт Страницу с игрой с необходимыми данными и добавляет её в массив созданных страниц
+        Создаёт страницу с игрой с необходимыми данными и добавляет её в массив созданных страниц
         :param size: Размер изначального поля
-        :param pieces_to_win: Колличество в ряд для победы
+        :param pieces_to_win: Количество в ряд для победы
         :return:
         """
         classic_game_page = GamePage(
@@ -82,7 +81,7 @@ class HomePage:
 
     def create_group_of_buttons(self) -> None:
         """
-        Создание группы кнопок на начальной странице  и добавление их в словарь со всеми объектами
+        Создание группы кнопок на начальной странице и добавление их в словарь со всеми объектами.
         :return:
         """
         buttons = []
@@ -121,7 +120,7 @@ class HomePage:
         self.objects_on_the_screen.append(win_block)
         generate_button = Button(self.user_game, size_block, win_block, hitbox=const.BUTTON_GENERATE_HITBOX,
                                  inner_text=const.BUTTON_GENERATE_CONTENT, default_texture=const.BUTTON_GENERATE_DEFAULT_TEXTURE,
-                                 hover_texture=const.BUTTON_GENERATE_HOVER_TEXTURE, click_texture=const.BUTTON_GENERATE_CLICK_TEXTURE)
+                                 hover_texture=const.BUTTON_GENERATE_HOVER_TEXTURE, click_texture=const.BUTTON_GENERATE_CLICK_TEXTURE, border_radius=const.BUTTON_GENERATE_BOARDER_RADIUS)
         self.objects_on_the_screen.append(generate_button)
 
 # ------------------------РЭНДЕР-----------------------------------------------------
@@ -165,7 +164,7 @@ class HomePage:
         index_of_page = -1
         for page in self.rendered_pages:
             index_of_page += 1
-            if page.size == size and page.pieceses_to_win == pieces_to_win:
+            if page.size == size and page.pieces_to_win == pieces_to_win:
                 self.page = index_of_page
                 if self.crosses_player == 1 and self.zeros_player == 0:
                     self.rendered_pages[index_of_page].make_move(
@@ -189,6 +188,12 @@ class HomePage:
             self.open_game_page(size=int(size_field.text.content),
                                 pieces_to_win=int(win_field.text.content))
 
+    def __str__(self) -> str:
+        return f"HomePage with: screen {self.screen} and title {self.title}"
+
+    def __repr__(self) -> str:
+        return f"HomePage: screen = {self.screen}, title = {self.title}, crosses player = {self.crosses_player} and zeros_player = {self.zeros_player}"
+
 
 class GamePage():
 
@@ -208,12 +213,12 @@ class GamePage():
         self.moves: list[int] = []
         self.size: int = size
         if pieces_to_win == 0:
-            self.pieceses_to_win: int = self.size
+            self.pieces_to_win: int = self.size
         else:
-            self.pieceses_to_win: int = pieces_to_win
+            self.pieces_to_win: int = pieces_to_win
         logic_board: Board = Board(size)
         self.logic: TicTacToeManager = TicTacToeManager(
-            logic_board, self.pieceses_to_win)
+            logic_board, self.pieces_to_win)
         # Временно функцию нейронки выполняет Adwersary
         self.computer: Adversary = Adversary(self.logic)
         self.visual_board: list[Button] = []
@@ -301,8 +306,8 @@ class GamePage():
         """
         for object in self.objects_on_the_screen.values():
             if isinstance(object, pygame.Rect):
-                pygame.draw.rect(self.home_page.screen, (133, 116, 115),
-                                 object, 0, 10)
+                pygame.draw.rect(self.home_page.screen,
+                                 const.STICKS_COLOR, object)
             else:
                 object.render(self.home_page.screen)
 
@@ -464,6 +469,12 @@ class GamePage():
         :return:
         """
         print(args[0])
+
+    def __str__(self) -> str:
+        return f"GamePage with size {self.size}, pieces_to_win {self.pieces_to_win}, crosses_player {self.crosses_player} and zeros_player {self.zeros_player}"
+
+    def __repr__(self) -> str:
+        return f"GamePage: screen = {self.home_page.screen}, size = {self.size}, pieces_to_win = {self.pieces_to_win}, crosses_player = {self.crosses_player} and zeros_player = {self.zeros_player}"
 
 
 def main():
