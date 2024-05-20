@@ -19,6 +19,15 @@ class Board:
             for x in range(self.size):
                 self.board.append(0)
 
+    # Получить уникальный ID доски. Всего возможных ID: (кол-во возможных ходов) в степени (кол-во ячеек). Для 3х3: 3^9
+    def get_uid(self) -> int:
+        result: int = 0
+        # Проходит по каждой ячейке доски, нормализует её (приводит к положительным числам)
+        # и выделяет ей свое место в системе счисления, равной размеру доски.
+        for i in range(len(self.board)):
+            result += self.size ** i * (self.board[i] + 1)
+        return result
+
 
 class Clickable:
 
