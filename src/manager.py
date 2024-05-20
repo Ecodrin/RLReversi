@@ -1,7 +1,7 @@
 import random
 from abc import ABC, abstractmethod
 
-from src.board import Board
+from board import Board
 
 
 class GameManager(ABC):

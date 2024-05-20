@@ -1,8 +1,8 @@
 import os
-
 import pygame
 
 from typing import Callable, Any
+from pygame.locals import Rect
 
 from gui_utility import center_relative_to
 from board import Clickable
@@ -10,7 +10,8 @@ from board import Clickable
 
 class StylizedText:
     def __init__(self, position: pygame.Rect, content: str = '',
-                 text_colour: pygame.color.Color = pygame.color.Color(255, 255, 255),
+                 text_colour: pygame.color.Color = pygame.color.Color(
+                     255, 255, 255),
                  font_family: str = 'arial', font_size: int = 24,
                  font_style: int = 0) -> None:
         """
@@ -28,7 +29,8 @@ class StylizedText:
         self.font_family: str = font_family
         self.font_size: int = font_size
         self.font_style: int = font_style
-        self.__text: list[tuple[pygame.SurfaceType, pygame.Rect]] = self.__create_text()
+        self.__text: list[tuple[pygame.SurfaceType,
+                                pygame.Rect]] = self.__create_text()
 
     @property
     def content(self) -> str:
@@ -76,7 +78,8 @@ class StylizedText:
         Создаёт шрифт исходя из входных данных.
         :return Возвращает созданный шрифт.
         """
-        bold, italic, underline = self.__is_bold(), self.__is_italic(), self.__is_underline()
+        bold, italic, underline = self.__is_bold(
+        ), self.__is_italic(), self.__is_underline()
         # Если шрифт есть в системных, то он создаётся специальной функцией.
         if self.font_family in pygame.font.get_fonts():
             font = pygame.font.SysFont(self.font_family, self.font_size)
@@ -112,13 +115,15 @@ class StylizedText:
         lines.append(line)
 
         # Вычисление начального смещения по y для центрирования текста по вертикали.
-        y_offset = self.position[1] + (self.position[3] - len(lines) * self.font_size) // 2
+        y_offset = self.position[1] + \
+            (self.position[3] - len(lines) * self.font_size) // 2
         surfaces = []
         for text_line in lines:
             # requires antialiasing: bool
             text_surface = font.render(text_line, True, self.text_colour)
             # Вычисление центра текстуры.
-            center = (self.position[0] + self.position[2] // 2, y_offset + font.size(text_line)[1] // 2)
+            center = (self.position[0] + self.position[2] //
+                      2, y_offset + font.size(text_line)[1] // 2)
             text_rect = text_surface.get_rect(center=center)
             surfaces.append((text_surface, text_rect))
             # Обновление смещения по y для следующей строки текста.
@@ -142,15 +147,75 @@ class StylizedText:
         return f'"Text {self._content}, Size {self.font_size}, Colour {self.text_colour}'
 
 
+class ClicableCell(Clickable):
+
+    def __init__(self, hitbox: pygame.Rect, onClick: Callable[..., Any], *args,
+                 default_texture: pygame.color.Color | os.PathLike = pygame.color.Color(
+                     255, 255, 255),
+                 hover_texture: pygame.color.Color | os.PathLike = pygame.color.Color(160, 160, 160)) -> None:
+        super().__init__(hitbox, onClick, *args)
+        self.default_texture: pygame.color.Color | os.PathLike = default_texture
+        self.hover_texture: pygame.color.Color | os.PathLike = hover_texture
+        self.button_texture: pygame.color.Color | os.PathLike = self.default_texture
+
+    def hover_click(self, event: pygame.event) -> None:
+        """
+        Красит клетку в нужный цвет.
+        :param event: Действия пользователя
+        """
+        collide = super().check_collision()
+        # Проверка на коллизию мышки с кнопкой.
+        if collide:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                super().process()
+            else:
+                self.button_texture = self.hover_texture
+
+        else:
+            self.button_texture = self.default_texture
+
+    def render(self, screen: pygame.surface) -> None:
+        """
+        Выводит кнопку на экран.
+        :param screen: Объект дисплея для обновления содержимого.
+        """
+        if isinstance(self.button_texture, pygame.color.Color):
+            pygame.draw.rect(screen, self.button_texture, self.hitbox, width=0)
+        elif isinstance(self.button_texture, os.PathLike):
+            # Кэшировние изображений, которые уже были зарендерены.
+            if self.button_texture != pygame.SurfaceType:
+                img = pygame.image.load(self.button_texture).convert_alpha()
+                if img.get_size() != (self.hitbox[2], self.hitbox[3]):
+                    img = pygame.transform.smoothscale(
+                        img, (self.hitbox[2], self.hitbox[3]))
+                self._image_cache = img
+            else:
+                img = self._image_cache
+
+            screen.blit(img, self.hitbox)
+        else:
+            raise TypeError('Invalid texture type')
+
+    def __repr__(self):
+        return f"ClicableCell(hitbox={self.hitbox},\n" \
+            f"default_texture={self.default_texture}, hover_texture={
+                self.hover_texture}"
+
+    def __str__(self) -> str:
+        return f"ClicableCell with hitbox: {self.hitbox}"
+
+
 class Button(Clickable):
 
     def __init__(self, onClick: Callable, *args,
-                 hitbox: pygame.Rect, inner_text: StylizedText,
-                 default_texture: pygame.color.Color | os.PathLike = pygame.color.Color(255, 255, 255),
-                 hover_texture: pygame.color.Color | os.PathLike = pygame.color.Color(160, 160, 160),
-                 click_texture: pygame.color.Color | os.PathLike = pygame.color.Color(64, 64, 64),
+                 hitbox: pygame.Rect, inner_text: StylizedText | str,
+                 default_texture: pygame.color.Color | os.PathLike = pygame.color.Color(
+                     255, 255, 255),
+                 hover_texture: pygame.color.Color | os.PathLike = pygame.color.Color(
+                     160, 160, 160),
+                 click_texture: pygame.color.Color | os.PathLike = pygame.color.Color(
+                     64, 64, 64),
                  border_radius: int = 0) -> None:
-
         """
         :param onClick (callback function):
         :param *args (arguments for callback function):
@@ -163,7 +228,9 @@ class Button(Clickable):
         """
 
         super().__init__(hitbox, onClick, *args)
-        self.inner_text: StylizedText = inner_text
+        self.inner_text: StylizedText | str = inner_text
+        if isinstance(inner_text, str):
+            self.inner_text = StylizedText(position=hitbox, content=inner_text)
         self.default_texture: pygame.color.Color | os.PathLike = default_texture
         self.hover_texture: pygame.color.Color | os.PathLike = hover_texture
         self.click_texture: pygame.color.Color | os.PathLike = click_texture
@@ -181,6 +248,7 @@ class Button(Clickable):
         if collide:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.button_texture = self.click_texture
+                super().process()
             else:
                 self.button_texture = self.hover_texture
 
@@ -200,7 +268,8 @@ class Button(Clickable):
             if self.button_texture != pygame.SurfaceType:
                 img = pygame.image.load(self.button_texture).convert_alpha()
                 if img.get_size() != (self.hitbox[2], self.hitbox[3]):
-                    img = pygame.transform.smoothscale(img, (self.hitbox[2], self.hitbox[3]))
+                    img = pygame.transform.smoothscale(
+                        img, (self.hitbox[2], self.hitbox[3]))
                 self._image_cache = img
             else:
                 img = self._image_cache
@@ -213,7 +282,8 @@ class Button(Clickable):
 
     def __setattr__(self, key, value):
         if key == 'hitbox' and isinstance(value, pygame.Rect) and self._image_cache:
-            self.inner_text.position = center_relative_to(self.inner_text.position, value)
+            self.inner_text.position = center_relative_to(
+                self.inner_text.position, value)
         else:
             object.__setattr__(self, key, value)
 
@@ -224,8 +294,9 @@ class Button(Clickable):
 
     def __repr__(self):
         return f"Button(hitbox={self.hitbox}, inner_text={self.inner_text}, " \
-               f"default_texture={self.default_texture}, hover_texture={self.hover_texture}, " \
-               f"click_texture={self.click_texture}, border_radius={self.border_radius})"
+            f"default_texture={self.default_texture}, hover_texture={self.hover_texture}, " \
+            f"click_texture={self.click_texture}, border_radius={
+                self.border_radius})"
 
     def __str__(self):
         return f"Button with text '{self.inner_text}' and hitbox {self.hitbox}"
@@ -337,7 +408,8 @@ class GroupObjectClass:
             # Двигаем объект(из блока) по оси.
             item.hitbox[shift_index] = shift
             # Центрируем объект по противоположной оси.
-            item.hitbox = center_relative_to(element=item.hitbox, relative_to=self.__position, mode=axis)
+            item.hitbox = center_relative_to(
+                element=item.hitbox, relative_to=self.__position, mode=axis)
             # Проверяем, вышло ли за границу (длина объекта + координата его левого угла >= границы блока).
             # Чтобы получить длину Rect, надо к shift_index прибавить 2.
             if (item.hitbox[shift_index] + item.hitbox[shift_index + 2] >= self.__position[shift_index] +
@@ -376,3 +448,93 @@ class GroupObjectClass:
 
     def __str__(self) -> str:
         return f'GroupObjectClass: objects: \n{list(self.content)}\n position{self.__position}'
+
+
+class NumberField:
+
+    def __init__(self, hitbox: pygame.Rect = pygame.Rect(300, 200, 200, 50), background_text: StylizedText | str = 'input',
+                 background_texture: pygame.color.Color | os.PathLike = pygame.color.Color(105, 103, 209), max_value: int = 15):
+        """
+        Класс для блока с вводом цифр
+        :param hitbox: хитбокс блока с текстом
+        :param background_text: текст на блоке по-умолчанию
+        :param background_texture: задний фон
+        :param max_value: максимальное значение, которое может быть в клетке
+        """
+        self.hitbox: pygame.Rect = hitbox
+        self.background_texture: pygame.color.Color | os.PathLike = background_texture
+        if isinstance(background_text, str):
+            self.background_text: StylizedText = StylizedText(
+                self.hitbox, background_text)
+            self.text: StylizedText = StylizedText(
+                self.hitbox, background_text)
+        else:
+            self.background_text: StylizedText = background_text
+            self.text: StylizedText = StylizedText(self.hitbox, background_text.content, background_text.text_colour,
+                                                   background_text.font_family, background_text.font_size, background_text.font_style)
+        self.max_value: int = max_value
+        self._image_cache: pygame.SurfaceType = pygame.Surface((800, 600))
+        self.is_text_correct: bool = False
+        self.is_click_field: bool = False
+
+    def render(self, screen: pygame.display):
+        """
+        Отображает блок для ввода текста
+        :param screen: дисплей для отображения
+        """
+        if isinstance(self.background_texture, pygame.color.Color):
+            pygame.draw.rect(screen, self.background_texture,
+                             self.hitbox, width=0)
+        elif isinstance(self.background_texture, os.PathLike):
+            # Кэшировние изображений, которые уже были зарендерены.
+            if self.background_texture != pygame.SurfaceType:
+                img = pygame.image.load(
+                    self.background_texture).convert_alpha()
+                if img.get_size() != (self.hitbox[2], self.hitbox[3]):
+                    img = pygame.transform.smoothscale(
+                        img, (self.hitbox[2], self.hitbox[3]))
+                self._image_cache = img
+            else:
+                img = self._image_cache
+
+            self.screen.blit(img, self.hitbox)
+        else:
+            raise TypeError('Invalid texture type')
+        self.text.render(screen)  # Белый цвет текста
+
+    def hover_click(self, event):
+        """
+        Обработка действий над текстом
+        """
+        match event.type:
+            case pygame.MOUSEBUTTONDOWN:
+                # Если кликнули на блок, то помечаем это
+                if self.hitbox.collidepoint(event.pos) and self.text.content == self.background_text.content:
+                    self.is_click_field = True
+                    self.text.content = ''
+                    self.is_text_correct = False
+                elif self.hitbox.collidepoint(event.pos):
+                    self.is_click_field = True
+                elif self.is_click_field and self.text.content == '':
+                    self.is_click_field = False
+                    self.text.content = self.background_text.content
+                else:
+                    self.is_click_field = False
+            case pygame.KEYDOWN:
+                if self.is_click_field and event.key == pygame.K_BACKSPACE and self.text.content == '':
+                    self.text.content = self.background_text.content
+                    self.is_text_correct = False
+                elif self.is_click_field and event.key == pygame.K_BACKSPACE and not self.text.content == self.background_text.content:
+                    self.text.content = self.text.content[:-1]
+                elif self.is_click_field and event.unicode.isdigit() and self.text.content != self.background_text.content:
+                    if not self.is_text_correct and event.unicode:
+                        self.text.content += event.unicode
+                        self.is_text_correct = True
+                    elif int(self.text.content + event.unicode) <= self.max_value:
+                        self.text.content += event.unicode
+
+    def __str__(self) -> str:
+        return f"NumberField with background_text '{self.background_text}' and hitbox {self.hitbox}"
+
+    def __repr__(self) -> str:
+        return f'NumberFieldClass: hitbox: {self.hitbox}\nbackground_text: {self.background_text}'
