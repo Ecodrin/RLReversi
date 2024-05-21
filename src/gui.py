@@ -1,10 +1,11 @@
 import os
-
 import pygame
-
-from gui_elements import Button, StylizedText, ClicableCell, GroupObjectClass, NumberField
-from typing import Callable, Any
 import constants as const
+
+from agent import TicTacToeAgent
+from gui_elements import Button, StylizedText, ClickableCell, GroupObjectClass, NumberField
+from typing import Callable, Any
+
 from board import Board
 from tictactoe import TicTacToeManager
 from manager import Adversary
@@ -64,7 +65,8 @@ class HomePage:
         Создаёт главную страницу с игрой
         :return:
         """
-        self.create_image(const.START_IMAGE_PATH)
+        self.objects_on_the_screen.append(
+            pygame.image.load(const.START_IMAGE_PATH))
         self.create_generate_button()
         self.create_group_of_buttons()
 
@@ -95,14 +97,6 @@ class HomePage:
             buttons, const.START_GROUP_OF_BUTTONS_HITBOX, 'vertical', const.START_GROUP_OF_BUTTONS_MARGINS)
         self.objects_on_the_screen.append(group_of_buttons)
 
-    def create_image(self, image_path: os.PathLike) -> None:
-        """
-        :param name: Название объекта
-        :param image_path: Путь до файла с изображением
-        :return:
-        """
-        self.objects_on_the_screen.append(pygame.image.load(image_path))
-
     def create_generate_button(self) -> None:
         """
         Создание кнопки и текстовых полей для генерации поля пользователем
@@ -118,10 +112,10 @@ class HomePage:
                                 background_texture=const.SCREEN_COLOR)
         self.objects_on_the_screen.append(size_block)
         self.objects_on_the_screen.append(win_block)
-        generate_button = Button(self.user_game, size_block, win_block, hitbox=const.BUTTON_GENERATE_HITBOX,
-                                 inner_text=const.BUTTON_GENERATE_CONTENT, default_texture=const.BUTTON_GENERATE_DEFAULT_TEXTURE,
-                                 hover_texture=const.BUTTON_GENERATE_HOVER_TEXTURE, click_texture=const.BUTTON_GENERATE_CLICK_TEXTURE, border_radius=const.BUTTON_GENERATE_BOARDER_RADIUS)
-        self.objects_on_the_screen.append(generate_button)
+        generative_button = Button(self.user_game, size_block, win_block, hitbox=const.BUTTON_GENERATE_HITBOX,
+                                   inner_text=const.BUTTON_GENERATE_CONTENT, default_texture=const.BUTTON_GENERATE_DEFAULT_TEXTURE,
+                                   hover_texture=const.BUTTON_GENERATE_HOVER_TEXTURE, click_texture=const.BUTTON_GENERATE_CLICK_TEXTURE, border_radius=const.BUTTON_GENERATE_BOARDER_RADIUS)
+        self.objects_on_the_screen.append(generative_button)
 
 # ------------------------РЭНДЕР-----------------------------------------------------
     def render(self) -> None:
@@ -184,15 +178,15 @@ class HomePage:
         :param win_field: объект, отвечающий за ввод колличества клеток для победы
         :return:
         """
-        if size_field.correct_text and win_field.correct_text and int(win_field.text.content) <= int(size_field.text.content):
+        if size_field.is_text_correct and win_field.is_text_correct and int(win_field.text.content) <= int(size_field.text.content):
             self.open_game_page(size=int(size_field.text.content),
                                 pieces_to_win=int(win_field.text.content))
 
     def __str__(self) -> str:
-        return f"HomePage with: screen {self.screen} and title {self.title}"
+        return f'HomePage with: screen {self.screen} and title {self.title}'
 
     def __repr__(self) -> str:
-        return f"HomePage: screen = {self.screen}, title = {self.title}, crosses player = {self.crosses_player} and zeros_player = {self.zeros_player}"
+        return f'HomePage(screen={self.screen}, title={self.title}, crosses_player={self.crosses_player}, zeros_player={self.zeros_player})'
 
 
 class GamePage():
@@ -221,6 +215,7 @@ class GamePage():
             logic_board, self.pieces_to_win)
         # Временно функцию нейронки выполняет Adwersary
         self.computer: Adversary = Adversary(self.logic)
+        # self.agent = TicTacToeAgent.load('agent10_1.5m_d3')
         self.visual_board: list[Button] = []
         self.home_page: HomePage = home_page
         self.objects_on_the_screen: dict = {}
@@ -258,23 +253,26 @@ class GamePage():
         :return:
         """
         n_sticks = self.size - 1
+        # Числа предназначены для конкретного расположения по центру поля 
+        # 710 - размер поля 710 на 710 пикселей, размер палочки - 10 пикселей + отступы слева и справа от палочек итого 20
+        # 10 - отступы по 5 пикселей слева и справа
         size_of_cell = (710 - n_sticks * 20 - 10) // self.size
         for y in range(self.size):
             for x in range(self.size):
                 crosses = self.crosses_player
                 zeros = self.zeros_player
                 number_of_button = self.size * y + x
-                hitbox = pygame.Rect(90 + x * (20 + size_of_cell), 25 +
-                                     # Числа предназначены для конкретного расположения по центру поля
-                                     y * (20 + size_of_cell), size_of_cell, size_of_cell)
-                if self.crosses_player == self.zeros_player == 1:                           # 90 - отступ слева
-                    not_cell = ClicableCell(hitbox, self.print_number, default_texture=pygame.color.Color(  # 10 - размер палочки + 5 пикселей отступы между клеткой и панками
+                # 90 - отступ слева 10 - размер палочки + 5 пикселей отступы между клеткой и панками = 10 + 5 * 2 = 20
+                # 25 - отступ сверху
+                hitbox = pygame.Rect(90 + x * (20 + size_of_cell), 25 + y * (20 + size_of_cell), size_of_cell, size_of_cell)
+                if self.crosses_player == self.zeros_player == 1:                           
+                    board_cell = ClickableCell(hitbox, self.print_number, default_texture=pygame.color.Color(  
                         const.SCREEN_COLOR), hover_texture=const.SCREEN_COLOR)
-                    self.objects_on_the_screen[number_of_button] = not_cell
+                    self.objects_on_the_screen[number_of_button] = board_cell
                 else:
-                    not_cell = ClicableCell(hitbox, self.make_move, number_of_button, crosses, zeros, default_texture=pygame.color.Color(
+                    board_cell = ClickableCell(hitbox, self.make_move, number_of_button, crosses, zeros, default_texture=pygame.color.Color(
                         const.SCREEN_COLOR), hover_texture=const.SCREEN_COLOR)
-                    self.objects_on_the_screen[number_of_button] = not_cell
+                    self.objects_on_the_screen[number_of_button] = board_cell
                 self.visual_board.append(
                     self.objects_on_the_screen[number_of_button])
 
@@ -285,18 +283,16 @@ class GamePage():
         """
         n_sticks = self.size - 1
         # числа нужны для корректной отцентровки
-        size_of_cell = (710 - n_sticks * 20 - 10) // self.size
         # 710 - размер всего поля - 20 отступы между палками и клетками, суммарные отступы по краям
+        size_of_cell = (710 - n_sticks * 20 - 10) // self.size
+        # 85 - отступ слева 10 * i отступ в зависимости от колличества клеток слева, 10 * (i - 1) - отступ в зависимости от кол-ва палок слева
+        # 20 координата по y, 10 - нирина палки, 710 - высота палка
         for i in range(1, self.size):
-            coords_vertical = (85 + size_of_cell * i + 10 *  # 85 - отступ слева 10 * i отступ в зависимости от колличества клеток слева, 10 * (i - 1) - отступ в зависимости от кол-ва палок слева
-                               # 20 координата по y, 10 - нирина палки, 710 - высота палка
-                               i + 10 * (i - 1), 20, 10, 710)
-            self.objects_on_the_screen[f"vert{
-                i}"] = pygame.Rect(coords_vertical)
-            coords_horizontal = (85, 20 + size_of_cell *  # 85 - отступ слева, 10 * i отступ в зависимости от колличества клеток сыерху, 10 * (i - 1) - отступ в зависимости от кол-ва палок сверху
-                                 i + 10 * i + 10 * (i - 1), 710, 10)
-            self.objects_on_the_screen[f"hor{
-                i}"] = pygame.Rect(coords_horizontal)
+            coords_vertical = (85 + size_of_cell * i + 10 * i + 10 * (i - 1), 20, 10, 710)
+            self.objects_on_the_screen[f'vert{i}'] = pygame.Rect(coords_vertical)
+            # 85 - отступ слева, 10 * i отступ в зависимости от колличества клеток сыерху, 10 * (i - 1) - отступ в зависимости от кол-ва палок сверху
+            coords_horizontal = (85, 20 + size_of_cell * i + 10 * i + 10 * (i - 1), 710, 10)
+            self.objects_on_the_screen[f'hor{i}'] = pygame.Rect(coords_horizontal)
 
 # -------------------------- Рэндер страницы с классической игрой -----------------
     def render(self) -> None:
@@ -307,7 +303,7 @@ class GamePage():
         for object in self.objects_on_the_screen.values():
             if isinstance(object, pygame.Rect):
                 pygame.draw.rect(self.home_page.screen,
-                                 const.STICKS_COLOR, object)
+                                 const.INNER_BOARDERS_COLOR, object)
             else:
                 object.render(self.home_page.screen)
 
@@ -326,10 +322,9 @@ class GamePage():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 self.home_page.running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    pygame.quit()
-                    self.home_page.running = False
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                pygame.quit()
+                self.home_page.running = False
 
 # ----------------------- РАБОТА С ДЕЙСТВИЯМИ НА СТРАНИЦЕ ----------------------
     def is_move_available(self, number: int) -> bool:
@@ -380,7 +375,7 @@ class GamePage():
         if winner is None:
             return True
         else:
-            # text = ['Ничья', "Крестики", "Нолики"] Для будущего
+            # text = ['Ничья', 'Крестики', 'Нолики'] Для будущего
             return False
 
     def make_move(self, number: int = -1, crosses_player: int = 1, zeros_player=1) -> None:
@@ -399,7 +394,8 @@ class GamePage():
                     computers_turn = self.computer.search_root(const.DEPTH)
                     self.zeros_move(computers_turn)
                 case 2:
-                    computers_turn = self.computer.search_root(const.DEPTH)
+                    computers_turn = self.agent.predict(
+                        self.logic.board.get_uid(), self.logic.find_legal_moves())[1]
                     self.zeros_move(computers_turn)
             if crosses_player == 1:  # если противник компъютер, то вызываем его ход
                 self.make_move(crosses_player=crosses_player,
@@ -412,8 +408,9 @@ class GamePage():
                     computers_turn = self.computer.search_root(const.DEPTH)
                     self.crosses_move(computers_turn)
                 case 2:
-                    computers_turn = self.computer.search_root(const.DEPTH)
-                    self.crosses_move(computers_turn)
+                    computers_turn = self.agent.predict(
+                        self.logic.board.get_uid(), self.logic.find_legal_moves())[1]
+                    self.zeros_move(computers_turn)
             if zeros_player == 1:  # если противник компъютер, то вызываем его ход
                 self.make_move(crosses_player=crosses_player,
                                zeros_player=zeros_player)
@@ -471,10 +468,10 @@ class GamePage():
         print(args[0])
 
     def __str__(self) -> str:
-        return f"GamePage with size {self.size}, pieces_to_win {self.pieces_to_win}, crosses_player {self.crosses_player} and zeros_player {self.zeros_player}"
+        return f'GamePage with size {self.size}, pieces_to_win {self.pieces_to_win}, crosses_player {self.crosses_player} and zeros_player {self.zeros_player}'
 
     def __repr__(self) -> str:
-        return f"GamePage: screen = {self.home_page.screen}, size = {self.size}, pieces_to_win = {self.pieces_to_win}, crosses_player = {self.crosses_player} and zeros_player = {self.zeros_player}"
+        return f'GamePage(home_page={self.home_page}, size={self.size}, pieces_to_win={self.pieces_to_win}, crosses_player={self.crosses_player}, zeros_palyer={self.zeros_player})'
 
 
 def main():
