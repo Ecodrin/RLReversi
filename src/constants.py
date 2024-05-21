@@ -90,5 +90,5 @@ ZEROS_TEXTURE = pathlib.Path('images/Frame 4.png')
 CROSSES_TEXTURE = pathlib.Path('images/Union.png')
 INNER_BOARDERS_COLOR = LIGHT_BROWN
 
-DEPTH = 6
+DEPTH = 10
 TITLE = 'Tic-Tac-Toe'

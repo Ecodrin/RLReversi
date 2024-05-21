@@ -61,8 +61,7 @@ class TicTacToeAgent:
             future_q_value - self.q_values[obs][action]
         )
 
-        self.q_values[obs][action] = (
-            self.q_values[obs][action] + self.lr * temporal_difference
+        self.q_values[obs][action] = (self.q_values[obs][action] + self.lr * temporal_difference
         )
 
     def _decay_epsilon(self):

@@ -65,8 +65,7 @@ class HomePage:
         Создаёт главную страницу с игрой
         :return:
         """
-        self.objects_on_the_screen.append(
-            pygame.image.load(const.START_IMAGE_PATH))
+        self.objects_on_the_screen.append(pygame.image.load(const.START_IMAGE_PATH))
         self.create_generate_button()
         self.create_group_of_buttons()
 
@@ -77,8 +76,7 @@ class HomePage:
         :param pieces_to_win: Количество в ряд для победы
         :return:
         """
-        classic_game_page = GamePage(
-            self, size=size, pieces_to_win=pieces_to_win, crosses_player=self.crosses_player, zeros_player=self.zeros_player)
+        classic_game_page = GamePage(self, size=size, pieces_to_win=pieces_to_win, crosses_player=self.crosses_player, zeros_player=self.zeros_player)
         self.rendered_pages.append(classic_game_page)
 
     def create_group_of_buttons(self) -> None:
@@ -179,8 +177,7 @@ class HomePage:
         :return:
         """
         if size_field.is_text_correct and win_field.is_text_correct and int(win_field.text.content) <= int(size_field.text.content):
-            self.open_game_page(size=int(size_field.text.content),
-                                pieces_to_win=int(win_field.text.content))
+            self.open_game_page(size=int(size_field.text.content), pieces_to_win=int(win_field.text.content))
 
     def __str__(self) -> str:
         return f'HomePage with: screen {self.screen} and title {self.title}'
@@ -302,8 +299,7 @@ class GamePage():
         """
         for object in self.objects_on_the_screen.values():
             if isinstance(object, pygame.Rect):
-                pygame.draw.rect(self.home_page.screen,
-                                 const.INNER_BOARDERS_COLOR, object)
+                pygame.draw.rect(self.home_page.screen, const.INNER_BOARDERS_COLOR, object)
             else:
                 object.render(self.home_page.screen)
 
@@ -394,8 +390,7 @@ class GamePage():
                     computers_turn = self.computer.search_root(const.DEPTH)
                     self.zeros_move(computers_turn)
                 case 2:
-                    computers_turn = self.agent.predict(
-                        self.logic.board.get_uid(), self.logic.find_legal_moves())[1]
+                    computers_turn = self.agent.predict(self.logic.board.get_uid(), self.logic.find_legal_moves())[1]
                     self.zeros_move(computers_turn)
             if crosses_player == 1:  # если противник компъютер, то вызываем его ход
                 self.make_move(crosses_player=crosses_player,
@@ -408,8 +403,7 @@ class GamePage():
                     computers_turn = self.computer.search_root(const.DEPTH)
                     self.crosses_move(computers_turn)
                 case 2:
-                    computers_turn = self.agent.predict(
-                        self.logic.board.get_uid(), self.logic.find_legal_moves())[1]
+                    computers_turn = self.agent.predict(self.logic.board.get_uid(), self.logic.find_legal_moves())[1]
                     self.zeros_move(computers_turn)
             if zeros_player == 1:  # если противник компъютер, то вызываем его ход
                 self.make_move(crosses_player=crosses_player,
@@ -476,7 +470,7 @@ class GamePage():
 
 def main():
     start = HomePage(pygame.display.set_mode((880, 880)),
-                     crosses_player=0, zeros_player=1)
+                     crosses_player=1, zeros_player=1)
     start.run()
 
 
