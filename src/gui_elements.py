@@ -146,7 +146,10 @@ class StylizedText:
 
 class ClickableCell(Clickable):
 
-    def __init__(self, hitbox: pygame.Rect, onClick: Callable[..., Any], *args,
+    def __init__(self, 
+                 hitbox: pygame.Rect, 
+                 onClick: Callable[..., Any], 
+                 *args,
                  default_texture: pygame.color.Color | os.PathLike = const.WHITE,
                  hover_texture: pygame.color.Color | os.PathLike = const.GREY) -> None:
         super().__init__(hitbox, onClick, *args)
