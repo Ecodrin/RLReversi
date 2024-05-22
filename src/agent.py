@@ -101,8 +101,10 @@ class TicTacToeAgent:
                 obs = next_obs
                 if done and reward == -10:
                     losses.append(losses[-1] + 1)
+                    victories.append(victories[-1])
                 if done and reward == 10:
                     victories.append(victories[-1] + 1)
+                    losses.append(losses[-1])
             self.decay_epsilon()
         plt.plot(victories)
         plt.show()
