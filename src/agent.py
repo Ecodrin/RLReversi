@@ -119,7 +119,6 @@ class TicTacToeAgent:
         """
         # artificially remove illegal moves and randomly choose one of the best moves
         temp = self.q_values[obs].copy()
-        print(temp, mask)
         temp[mask] += 10
         return temp, random.choice(np.where(temp.max() == temp)[0])
 
