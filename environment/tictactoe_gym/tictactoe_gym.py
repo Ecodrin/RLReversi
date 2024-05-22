@@ -23,11 +23,8 @@ class TicTacToeEnv(gymnasium.Env):
         self.manager.reset_board()
         self.action_space.legal_moves = self.manager.find_legal_moves()
         # делаем первый ход(чтобы модель ходила вторая)
-        if not self.depth:
-            first_move = self.action_space.sample()
-        else:
-            first_move = self.adversary.search_root(self.depth)
-        # self.action_space.legal_moves.remove(first_move)
+        first_move = self.adversary.search_root(self.depth)
+        self.action_space.legal_moves.remove(first_move)
         self.manager.make_move(first_move)
         return self.manager.board.get_uid(), {}
 
@@ -37,25 +34,21 @@ class TicTacToeEnv(gymnasium.Env):
         :return: (поле, оценка, победа(bool), False, информация о шаге)
         """
         if action not in self.manager.find_legal_moves():
-            return self.manager.board.get_uid(), -20, False, False, {}
+            return self.manager.board.get_uid(), -10, False, False, {}
         self.manager.make_move(action)
         reward = self.manager.check_win()
         if reward is not None:
-            return (self.manager.board.get_uid(), -reward * 10,
-                    True, False, {'step': action, 'win': True, 'reward': reward})
+            return (self.manager.board.get_uid(), -reward,
+                    True, False, {'step': action, 'win': True, 'reward': -reward})
         # Умный ход ботяры(глубина выбирается по тому, что вам нужно)
-        if not self.depth:
-            move = self.action_space.sample()
-        else:
-            move = self.adversary.search_root(self.depth)
-            self.action_space.legal_moves = self.manager.find_legal_moves()
-        self.manager.make_move(move)
+        self.manager.make_move(self.adversary.search_root(self.depth))
+        self.action_space.legal_moves = self.manager.find_legal_moves()
         reward = self.manager.check_win()
         terminated = True if reward is not None else False
         if reward is None:
-            reward = 1/10
-        return (self.manager.board.get_uid(), -reward * 10, terminated, False,
-                {'step': action, 'win': terminated, 'reward': reward})
+            reward = 0
+        return (self.manager.board.get_uid(), -reward, terminated, False,
+                {'step': action, 'win': terminated, 'reward': -reward})
 
     def render(self, mode='human') -> None:
         match mode:
