@@ -5,7 +5,6 @@ import random
 from collections import defaultdict
 
 import gymnasium as gym
-import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
 
@@ -79,11 +78,8 @@ class TicTacToeAgent:
         self.epsilon = max(self.final_epsilon, self.epsilon - self.epsilon_decay)
 
     def learn(self, total_episodes=50_000) -> None:
-        all_rewards = []
-        mean_rewards = []
         if self.epsilon_decay is None:
             self.epsilon_decay = self.epsilon / (total_episodes / 2)
-            # print(self.epsilon_decay)
         for episode in tqdm(range(total_episodes)):
             obs, info = self.env.reset()
             done = False
@@ -97,13 +93,7 @@ class TicTacToeAgent:
                 # update if the environment is done and the current obs
                 done = terminated or truncated
                 obs = next_obs
-            all_rewards.append(reward)
-            if episode % 100 == 0:
-                mean_rewards.append(np.mean(all_rewards))
             self.decay_epsilon()
-        plt.plot(range(total_episodes // 100), mean_rewards)
-        plt.ylim(-10, 10)
-        plt.show()
 
     def predict(self, obs: int, mask: list[int]) -> tuple[np.ndarray, float]:
         """
